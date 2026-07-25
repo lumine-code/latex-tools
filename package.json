@@ -7,9 +7,12 @@
     "url": "https://github.com/lumine-code/latex-tools/issues"
   },
   "keywords": [
-    "latex",
-    "tex",
-    "typesetting"
+    "latexmk",
+    "synctex",
+    "compile",
+    "pdf",
+    "typesetting",
+    "miktex"
   ],
   "version": "1.0.0",
   "license": "MIT",
