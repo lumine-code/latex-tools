@@ -1,7 +1,7 @@
 {
   "name": "latex-tools",
   "author": "lumine-code",
-  "description": "Compile LaTeX documents with latexmk and view PDFs",
+  "description": "Compile LaTeX documents with latexmk and view PDFs.",
   "repository": "https://github.com/lumine-code/latex-tools",
   "bugs": {
     "url": "https://github.com/lumine-code/latex-tools/issues"

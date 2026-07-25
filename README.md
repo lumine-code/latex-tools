@@ -1,6 +1,8 @@
 # latex-tools
 
-Compile LaTeX documents with `latexmk` and view PDFs. Includes SyncTeX support, compile-on-save, integrated linting, and multiple build management.
+Compile LaTeX documents with latexmk and view PDFs.
+
+Includes SyncTeX support, compile-on-save, integrated linting, and multiple build management.
 
 ## Features
 
