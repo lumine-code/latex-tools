@@ -1,0 +1,68 @@
+/*
+ * Lumine exposes the editor UI theme variables as CSS custom properties
+ * (e.g. --text-color-error), so the old ui-variables Less import and its
+ * @-prefixed variable references become var(--*).
+ */
+
+.latex-tools-status {
+  padding: 0 0.5em;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  cursor: default;
+
+  &:hover {
+    background-color: var(--background-color-highlight);
+    opacity: 0.8;
+  }
+
+  &:active {
+    opacity: 0.6;
+  }
+
+  .latex-tools-status-label {
+    font-weight: 500;
+
+    &.building-animation {
+      animation: latex-pulse 1s ease-in-out infinite;
+    }
+  }
+
+  .latex-tools-status-timer {
+    opacity: 0.8;
+  }
+
+  &.status-idle,
+  &.status-building {
+    color: var(--text-color);
+  }
+
+  &.status-success {
+    color: var(--text-color-success);
+  }
+
+  &.status-error {
+    color: var(--text-color-error);
+  }
+}
+
+.latex-tools-observed-status {
+  padding: 0 0.5em;
+  cursor: default;
+
+  &:hover {
+    background-color: var(--background-color-highlight);
+    opacity: 0.8;
+  }
+}
+
+@keyframes latex-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}

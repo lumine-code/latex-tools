@@ -4,60 +4,36 @@ Compile LaTeX documents with `latexmk` and view PDFs. Includes SyncTeX support, 
 
 ## Features
 
-- **Compilation**: Build documents using `latexmk` with configurable engines.
-- **Compile-on-save**: Automatically recompile when an observed file is saved.
-- **PDF viewing**: Open PDFs internally via [pdf-viewer](https://github.com/asiloisad/pulsar-pdf-viewer) or in an external viewer.
-- **SyncTeX**: Forward and backward search between source and PDF.
-- **Linter integration**: Error reporting via `linter-indie`. With [linter-bundle](https://github.com/asiloisad/pulsar-linter-bundle), errors display clickable references to log files.
-- **Multiple builds**: Compile multiple files simultaneously with independent build states.
-- **Magic comments**: Per-file engine selection with `% !TEX program`.
+- **Compilation**: build documents using `latexmk` with configurable engines.
+- **Compile-on-save**: automatically recompile when an observed file is saved.
+- **PDF viewing**: open PDFs internally via [pdf-view](https://github.com/lumine-code/pdf-view) or in an external viewer.
+- **SyncTeX**: forward and backward search between source and PDF.
+- **Linter integration**: error and warning reporting via `linter-indie` with clickable references to source locations.
+- **Multiple builds**: compile multiple files simultaneously with independent build states.
+- **Magic comments**: per-file engine and root selection with `% !TEX program` and `% !TEX root`.
 
 ## Installation
 
-To install `latex-tools` search for [latex-tools](https://web.pulsar-edit.dev/packages/latex-tools) in the Install pane of the Pulsar settings or run `ppm install latex-tools`. Alternatively, you can run `ppm install asiloisad/pulsar-latex-tools` to install a package directly from the GitHub repository.
+To install `latex-tools` search for _latex-tools_ in the Install pane of the Lumine settings or run `lumine --install lumine-code/latex-tools`.
 
-## Installing LaTeX
+## Usage
 
-This package requires `latexmk` and a LaTeX distribution to be installed on your system.
+This package requires `latexmk` and a LaTeX distribution to be installed on your system:
 
-**Windows:**
-- [MiKTeX](https://miktex.org/download) - Recommended, includes `latexmk`
-- [TeX Live](https://www.tug.org/texlive/) - Full distribution
+- **Windows**: [MiKTeX](https://miktex.org/download) (includes `latexmk`) or [TeX Live](https://www.tug.org/texlive/)
+- **macOS**: [MacTeX](https://www.tug.org/mactex/) or `brew install --cask mactex`
+- **Linux**: e.g. `sudo apt install texlive-full latexmk`
 
-**macOS:**
-- [MacTeX](https://www.tug.org/mactex/) - Full TeX Live distribution for macOS
-- Or via Homebrew: `brew install --cask mactex`
+If `latexmk` is not in your PATH, set the full path in the package settings under **Path to latexmk**. The `latex-tools:global-rc` command opens your global `latexmkrc` file to customize `latexmk` behavior (e.g. glossaries support).
 
-**Linux:**
-- Ubuntu/Debian: `sudo apt install texlive-full latexmk`
-- Fedora: `sudo dnf install texlive-scheme-full latexmk`
-- Arch: `sudo pacman -S texlive-most latexmk`
-
-After installation, verify that `latexmk` is available in your PATH:
-
-```bash
-latexmk --version
-```
-
-## Global configuration
-
-Use the `latex-tools:global-rc` command to open your global `latexmkrc` configuration file. This file allows you to customize `latexmk` behavior, such as adding support for glossaries:
-
-```perl
-# Glossaries support
-add_cus_dep('glo', 'gls', 0, 'makeglossaries');
-add_cus_dep('acn', 'acr', 0, 'makeglossaries');
-sub makeglossaries {
-    system("makeglossaries \"$_[0]\"");
-}
-```
+The status bar item shows the build state of the active file with a live timer (`TeX` idle, `TeX*` compile-on-save enabled; an eye icon with `TeX (N)` counts observed files). Left click compiles, alt-left click toggles compile-on-save, middle click splits PDF and TeX source, and right click interrupts the build and cleans auxiliary files. The item stays visible while viewing the output PDF, and opening a PDF during a build waits for completion before showing the updated file. Multi-file projects are supported: the build root is resolved from `% !TEX root` magic comments, `.fls` recorder files, or by scanning for documents that include the current file.
 
 ## Commands
 
 Commands available in `atom-workspace`:
 
-- `latex-tools:global-rc`: open the global `latexmkrc` configuration file (creates with defaults if not exists).
-- `latex-tools:observed-files`: list files observed for compile-on-save.
+- `latex-tools:global-rc`: open the global `latexmkrc` configuration file (creates it if missing),
+- `latex-tools:observed-files`: list files observed for compile-on-save,
 - `latex-tools:clear-all-observed-files`: stop observing all compile-on-save files.
 
 Commands available in `atom-text-editor[data-grammar~="latex"]`:
@@ -69,133 +45,32 @@ Commands available in `atom-text-editor[data-grammar~="latex"]`:
 - `latex-tools:clean`: remove auxiliary files generated during compilation,
 - `latex-tools:clean-linter`: clear all linter messages,
 - `latex-tools:kill-and-clean`: interrupt the build and clean auxiliary files,
-- `latex-tools:open-pdf`: open the generated PDF in Pulsar,
+- `latex-tools:open-pdf`: open the generated PDF in Lumine,
 - `latex-tools:synctex`: jump from source to corresponding PDF location (forward SyncTeX),
 - `latex-tools:open-pdf-external`: open the generated PDF in an external viewer.
 
-## Status bar
+Commands available in `.latex-tools-observed-files-list`:
 
-The status bar item shows the current build state with a live timer:
+- `latex-tools:unobserve-selected-file`: stop observing the selected file.
 
-- **TeX**: idle, click to compile
-- **TeX\***: compile-on-save is enabled
-- **eye icon + TeX (N)**: number of files observed for compile-on-save
+## Customization
 
-**Mouse interactions:**
+The status-bar item can be restyled from your `styles.less`, e.g.:
 
-| Action | Effect |
-| --- | --- |
-| Left click | Compile |
-| Alt + Left click | Toggle file observation for compile-on-save |
-| Middle click | Split PDF / TeX source |
-| Right click | Kill build and clean auxiliary files |
-| TeX (N) left click | List observed files |
-| TeX (N) right click | Clear all observed files |
-
-## Integration with pdf-viewer
-
-This package works seamlessly with the [pdf-viewer](https://github.com/asiloisad/pulsar-pdf-viewer) package:
-
-- **SyncTeX support**: Forward and backward search between source and PDF when both packages are installed.
-- **Status bar**: The LaTeX status bar remains visible when viewing PDFs, allowing you to compile, open PDF, or clean files directly from the PDF viewer.
-- **Build waiting**: If you open a PDF while a build is in progress, the package will wait for completion and automatically open the updated PDF.
-
-## Magic comments
-
-You can specify the LaTeX engine and root document per-file using magic comments at the top of your `.tex` file:
-
-```latex
-% !TEX program = xelatex
-% !TEX root = ../main.tex
-\documentclass{article}
-...
-```
-
-Supported engines: `pdflatex`, `xelatex`, `lualatex`
-
-The program magic comment overrides the global engine setting in the package configuration. The root magic comment is used by SyncTeX when the active file is included by another document.
-
-Root file discovery is used for compile, open PDF, clean, and SyncTeX commands. Discovery checks `% !TEX root` first, then existing build metadata such as `.fls`, and finally common LaTeX include commands like `\input`, `\include`, `\subfile`, `\import`, and `\subimport`.
-
-Compile-on-save observes file paths rather than editor instances. If it is enabled for an included file, saving that file compiles the discovered root document.
-
-## Multiple simultaneous builds
-
-The package supports compiling multiple LaTeX files simultaneously. Each file tracks its own build state independently, allowing you to start a compilation in one file while another is still building. The status bar updates to show the build state of the currently active file.
-
-## Provided Service `latex-tools`
-
-Allows other packages to integrate with LaTeX compilation and SyncTeX. Subscribe to build events, query build status, and perform forward/backward SyncTeX lookups.
-
-In your `package.json`:
-
-```json
-{
-  "consumedServices": {
-    "latex-tools": {
-      "versions": {
-        "1.0.0": "consumeLatexTools"
-      }
-    }
+```less
+.latex-tools-status {
+  &.status-building {
+    color: var(--text-color-info);
   }
 }
 ```
 
-In your main module:
+## Services
 
-```javascript
-consumeLatexTools(service) {
-  // Subscribe to build events
-  this.subscriptions.add(
-    service.onDidStartBuild(({ file }) => {
-      console.log(`Build started: ${file}`);
-    }),
-    service.onDidFinishBuild(({ file, output }) => {
-      console.log(`Build finished: ${file}`);
-    }),
-    service.onDidFailBuild(({ file, error, output }) => {
-      console.log(`Build failed: ${file}`, error);
-    }),
-    service.onDidChangeBuildStatus(({ status, file, error }) => {
-      console.log(`Build status changed: ${status}`);
-    })
-  );
-
-  // Get current status for a specific file
-  const { status, file } = service.getStatus(filePath);
-
-  // Check if a specific file is currently building
-  const building = service.isBuilding(filePath);
-}
-```
-
-### Methods
-
-| Method | Description |
-| --- | --- |
-| `onDidStartBuild(callback)` | Called when a build starts. Callback receives `{ file }`. |
-| `onDidFinishBuild(callback)` | Called when a build succeeds. Callback receives `{ file, output }`. |
-| `onDidFailBuild(callback)` | Called when a build fails. Callback receives `{ file, error, output }`. |
-| `onDidChangeBuildStatus(callback)` | Called on any status change. Callback receives `{ status, file, error? }`. |
-| `onDidUpdateMessages(callback)` | Called when linter messages update. Callback receives `{ file, messages }`. |
-| `onDidChangeCompileOnSave(callback)` | Called when compile-on-save is toggled. Callback receives `{ file, enabled }`. |
-| `getStatus(filePath?)` | Returns status for a specific file or all builds if no path provided. |
-| `isBuilding(filePath)` | Returns `true` if the specified file is currently being compiled. |
-| `isAnyBuilding()` | Returns `true` if any file is currently being compiled. |
-| `compile(filePath)` | Trigger compilation for the given file. |
-| `interrupt(filePath)` | Interrupt the build for the given file. |
-| `interruptAll()` | Interrupt all running builds. |
-| `isCompileOnSaveEnabled(editor)` | Returns `true` if compile-on-save is active for the editor. |
-| `getCompileOnSaveFiles()` | Returns file paths currently observed by compile-on-save. |
-| `syncToPdf(file, line, column)` | Forward SyncTeX: returns `{ page, x, y }` for PDF position. |
-| `syncToSource(file, page, x, y)` | Backward SyncTeX: returns `{ file, line, column }` and opens the source. |
-
-### Status values
-
-- `'idle'`: No build in progress
-- `'building'`: Build is currently running
-- `'success'`: Last build completed successfully
-- `'error'`: Last build failed
+- **latex-tools** (`1.0.0`): provided to let other packages drive LaTeX compilation — subscribe to build events (`onDidStartBuild`, `onDidFinishBuild`, `onDidFailBuild`, `onDidChangeBuildStatus`), query status (`getStatus`, `isBuilding`), control builds (`compile`, `interrupt`, `interruptAll`), and resolve SyncTeX positions (`syncToPdf`, `syncToSource`).
+- **status-bar** (`^1.0.0`): consumed to show the build state, timer, and observed-files counter in the status bar.
+- **open-external** (`1.0.0`): consumed to open generated PDFs in an external viewer.
+- **linter-indie** (`2.0.0`): consumed to report LaTeX errors, warnings, and infos in the linter panel.
 
 ## Contributing
 

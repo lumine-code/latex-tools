@@ -1,0 +1,16 @@
+{
+  "atom-text-editor[data-grammar~=\"latex\"]": {
+    "f5": "latex-tools:compile",
+    "alt-f5": "latex-tools:toggle-compile-on-save",
+    "ctrl-f5": "latex-tools:interrupt",
+    "f6": "latex-tools:clean",
+    "alt-f6": "latex-tools:clean-linter",
+    "ctrl-f6": "latex-tools:kill-and-clean",
+    "f7": "latex-tools:open-pdf",
+    "alt-f7": "latex-tools:synctex",
+    "f8": "latex-tools:open-pdf-external"
+  },
+  ".latex-tools-observed-files-list": {
+    "ctrl-d": "latex-tools:unobserve-selected-file"
+  }
+}
