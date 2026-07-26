@@ -356,7 +356,7 @@ describe("latex-tools", () => {
   describe("linter integration", () => {
     it("registers an indie linter through the linter-indie service", () => {
       const registered = [];
-      mainModule.consumeIndie((options) => {
+      mainModule.consumeLinterRegistry((options) => {
         registered.push(options);
         return { setAllMessages() {}, clearMessages() {}, dispose() {} };
       });
