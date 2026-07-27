@@ -9,7 +9,7 @@ Drives LaTeX compilation from another package: start and interrupt builds, read 
 | Consumed by | `consumeLatexTools(latexTools)`                             |
 | Owner       | [`latex-tools`](https://github.com/lumine-code/latex-tools) |
 
-Consumed by `pdf-view`, which uses it to keep the rendered PDF in step with the source and to jump between the two. The sibling service [`typst-tools`](https://lumine-code.github.io/docs.html#services/typst-tools) has a nearly identical shape.
+Consumed by `pdf-view`, which uses it to keep the rendered PDF in step with the source and to jump between the two. The sibling service `typst-tools` has a nearly identical shape.
 
 ## Registration
 
