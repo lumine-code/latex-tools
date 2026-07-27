@@ -298,6 +298,19 @@ describe("latex-tools", () => {
       expect(messages[0].location.position.end.row).toBe(8);
     });
 
+    it("parses package info messages as hints", () => {
+      const log = [
+        "This is pdfTeX, Version 3.14",
+        "Package hyperref Info: Option 'colorlinks' set on input line 6",
+        "",
+      ].join("\n");
+      const messages = parser.parse(log, "/proj/doc.tex");
+      expect(messages.length).toBe(1);
+      expect(messages[0].severity).toBe("hint");
+      expect(messages[0].excerpt).toContain("Package hyperref");
+      expect(messages[0].location.position.start.row).toBe(5);
+    });
+
     it("computes statistics across severities", () => {
       const log = [
         "This is pdfTeX, Version 3.14",
@@ -307,12 +320,15 @@ describe("latex-tools", () => {
         "",
         "Overfull \\hbox (1.0pt too wide) at lines 4--4",
         "",
+        "Package geometry Info: Driver auto-setting on input line 5",
+        "",
       ].join("\n");
       parser.parse(log, "/proj/doc.tex");
       const stats = parser.getStatistics();
       expect(stats.errors).toBe(1);
       expect(stats.warnings).toBe(1);
       expect(stats.info).toBe(1);
+      expect(stats.hints).toBe(1);
     });
   });
 
@@ -362,6 +378,52 @@ describe("latex-tools", () => {
       });
       expect(registered).toEqual([{ name: "LaTeX" }]);
       expect(mainModule.linterProvider.indieInstance).toBeTruthy();
+    });
+
+    describe("verbosity filtering", () => {
+      let sent;
+
+      function message(severity) {
+        return {
+          severity,
+          excerpt: `a ${severity} message`,
+          location: {
+            fullPath: "/proj/doc.tex",
+            position: { start: { row: 0, column: 0 }, end: { row: 0, column: 1 } },
+          },
+        };
+      }
+
+      function setAll() {
+        mainModule.linterProvider.setMessages([
+          message("error"),
+          message("warning"),
+          message("info"),
+          message("hint"),
+        ]);
+        return sent.map((msg) => msg.severity);
+      }
+
+      beforeEach(() => {
+        sent = [];
+        mainModule.consumeLinterRegistry(() => ({
+          setAllMessages(messages) {
+            sent = messages;
+          },
+          clearMessages() {},
+          dispose() {},
+        }));
+      });
+
+      it("drops both low-priority tiers below extended verbosity", () => {
+        atom.config.set("latex-tools.outputVerbosity", "default");
+        expect(setAll()).toEqual(["error", "warning"]);
+      });
+
+      it("keeps info and hint messages when verbosity is extended", () => {
+        atom.config.set("latex-tools.outputVerbosity", "extended");
+        expect(setAll()).toEqual(["error", "warning", "info", "hint"]);
+      });
     });
   });
 

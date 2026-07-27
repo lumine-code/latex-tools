@@ -72,7 +72,7 @@ The status-bar item can be restyled from your `styles.less`, e.g.:
 - **[latex-tools](docs/latex-tools.md)** (`1.0.0`): provided to let other packages drive LaTeX compilation — subscribe to build events (`onDidStartBuild`, `onDidFinishBuild`, `onDidFailBuild`, `onDidChangeBuildStatus`), query status (`getStatus`, `isBuilding`), control builds (`compile`, `interrupt`, `interruptAll`), and resolve SyncTeX positions (`syncToPdf`, `syncToSource`).
 - **status-bar** (`^1.0.0`): consumed to show the build state, timer, and observed-files counter in the status bar.
 - **open-external** (`^1.0.0`): consumed to open generated PDFs in an external viewer.
-- **linter.registry** (`^1.0.0`): consumed to report LaTeX errors, warnings, and infos in the linter panel.
+- **linter.registry** (`^1.0.0`): consumed to report LaTeX errors, warnings, infos, and hints in the linter panel.
 
 ## Contributing
 
