@@ -20,6 +20,7 @@ describe("latex-tools", () => {
   });
 
   afterEach(() => {
+    atom.modals.cancel("spec");
     for (const dir of tempDirs) {
       try {
         fs.rmSync(dir, { recursive: true, force: true });
@@ -217,6 +218,89 @@ describe("latex-tools", () => {
     it("rejects non-tex files", () => {
       expect(mainModule.setCompileOnSaveForFile("/tmp/doc.txt", true)).toBe(false);
       expect(mainModule.isCompileOnSaveEnabledForFile("/tmp/doc.txt")).toBe(false);
+    });
+  });
+
+  describe("observed files list", () => {
+    let first, second;
+
+    // The editor ships `spec/helpers/modal-helpers`, but a standalone clone of
+    // this package has no editor checkout to reach it in, so assert through the
+    // public `atom.modals` surface instead.
+    const session = () => atom.modals.getActiveSession();
+
+    async function settle() {
+      const current = session();
+      if (!current) return;
+      if (current.frame.run) await current.frame.run.whenSettled();
+      await Promise.resolve();
+    }
+
+    function textOf(selector) {
+      const current = session();
+      if (!current) return [];
+      return Array.from(current.element.querySelectorAll(selector)).map(
+        (element) => element.textContent,
+      );
+    }
+
+    const labels = () => textOf("ol.list-group > li .primary-text");
+    const details = () => textOf("ol.list-group > li .secondary-line");
+
+    function unobserve() {
+      atom.commands.dispatch(session().element, "modals:unobserve-file");
+      return settle();
+    }
+
+    beforeEach(async () => {
+      const dir = makeTempDir();
+      const document = "\\documentclass{article}\\begin{document}\\end{document}";
+      first = path.resolve(path.join(dir, "one.tex"));
+      second = path.resolve(path.join(dir, "two.tex"));
+      fs.writeFileSync(first, document);
+      fs.writeFileSync(second, document);
+      // Rows show project-relative paths, so pin the project to make them so.
+      atom.project.setPaths([dir]);
+      mainModule.setCompileOnSaveForFile(first, true);
+      mainModule.setCompileOnSaveForFile(second, true);
+      mainModule.showObservedFiles();
+      await settle();
+    });
+
+    it("lists every observed file with its resolved root", () => {
+      expect(session().view.id).toBe("latex-tools.observed-files");
+      expect(labels()).toEqual(["one.tex", "two.tex"]);
+      expect(details()).toEqual(["Root: one.tex", "Root: two.tex"]);
+    });
+
+    it("opens the confirmed file, searching all panes", async () => {
+      spyOn(atom.workspace, "open");
+      atom.commands.dispatch(session().element, "core:confirm");
+      await settle();
+      expect(atom.workspace.open).toHaveBeenCalledWith(first, { searchAllPanes: true });
+      expect(session()).toBe(null);
+    });
+
+    it("unobserves the focused file and stays open on the rest", async () => {
+      await unobserve();
+      expect(mainModule.isCompileOnSaveEnabledForFile(first)).toBe(false);
+      expect(mainModule.observedFilesStatusView.count).toBe(1);
+      expect(session()).not.toBe(null);
+      expect(labels()).toEqual(["two.tex"]);
+    });
+
+    it("closes once the last observed file is unobserved", async () => {
+      await unobserve();
+      await unobserve();
+      expect(mainModule.getCompileOnSaveFiles()).toEqual([]);
+      expect(session()).toBe(null);
+    });
+
+    it("re-reads the observed set when they are all cleared underneath it", async () => {
+      mainModule.clearCompileOnSaveFiles();
+      await settle();
+      expect(session()).not.toBe(null);
+      expect(labels()).toEqual([]);
     });
   });
 

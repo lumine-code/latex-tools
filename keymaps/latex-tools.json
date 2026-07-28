@@ -9,8 +9,5 @@
     "f7": "latex-tools:open-pdf",
     "alt-f7": "latex-tools:synctex",
     "f8": "latex-tools:open-pdf-external"
-  },
-  ".latex-tools-observed-files-list": {
-    "ctrl-d": "latex-tools:unobserve-selected-file"
   }
 }

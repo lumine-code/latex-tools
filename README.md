@@ -51,10 +51,6 @@ Commands available in `atom-text-editor[data-grammar~="latex"]`:
 - `latex-tools:synctex`: jump from source to corresponding PDF location (forward SyncTeX),
 - `latex-tools:open-pdf-external`: open the generated PDF in an external viewer.
 
-Commands available in `.latex-tools-observed-files-list`:
-
-- `latex-tools:unobserve-selected-file`: stop observing the selected file.
-
 ## Customization
 
 The status-bar item can be restyled from your `styles.less`, e.g.:
