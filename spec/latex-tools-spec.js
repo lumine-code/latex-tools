@@ -222,7 +222,7 @@ describe("latex-tools", () => {
   });
 
   describe("observed files list", () => {
-    let first, second;
+    let first, second, projectPaths;
 
     // The editor ships `spec/helpers/modal-helpers`, but a standalone clone of
     // this package has no editor checkout to reach it in, so assert through the
@@ -260,11 +260,19 @@ describe("latex-tools", () => {
       fs.writeFileSync(first, document);
       fs.writeFileSync(second, document);
       // Rows show project-relative paths, so pin the project to make them so.
+      // The temp directory is removed after each spec, so put the paths back
+      // rather than leaving later specs pointed at a deleted root.
+      projectPaths = atom.project.getPaths();
       atom.project.setPaths([dir]);
       mainModule.setCompileOnSaveForFile(first, true);
       mainModule.setCompileOnSaveForFile(second, true);
       mainModule.showObservedFiles();
       await settle();
+    });
+
+    afterEach(() => {
+      atom.modals.cancel("spec");
+      atom.project.setPaths(projectPaths);
     });
 
     it("lists every observed file with its resolved root", () => {
@@ -301,6 +309,17 @@ describe("latex-tools", () => {
       await settle();
       expect(session()).not.toBe(null);
       expect(labels()).toEqual([]);
+    });
+
+    it("ignores confirm when nothing is focused", async () => {
+      spyOn(atom.workspace, "open");
+      mainModule.clearCompileOnSaveFiles();
+      await settle();
+      atom.commands.dispatch(session().element, "core:confirm");
+      await settle();
+      expect(atom.workspace.open).not.toHaveBeenCalled();
+      expect(session()).not.toBe(null);
+      expect(session().frame.status.severity).toBe(null);
     });
   });
 
