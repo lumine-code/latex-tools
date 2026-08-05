@@ -23,6 +23,14 @@
     "You can compile the LaTeX document you are editing with {{ 'latex-tools:compile' | keystroke }}"
   ],
   "main": "./lib/main",
+  "files": [
+    "docs",
+    "keymaps",
+    "lib",
+    "menus",
+    "spec",
+    "styles"
+  ],
   "scripts": {
     "test": "lumine --test spec",
     "lint": "eslint . --max-warnings 0",
