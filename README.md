@@ -57,9 +57,9 @@ Commands available in `.latex-tools-observed-files-list`:
 
 ## Customization
 
-The status-bar item can be restyled from your `styles.less`, e.g.:
+The status-bar item can be restyled from your `styles.css`, e.g.:
 
-```less
+```css
 .latex-tools-status {
   &.status-building {
     color: var(--text-color-info);
