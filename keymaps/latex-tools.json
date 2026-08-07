@@ -8,6 +8,8 @@
     "f6": "latex-tools:clean",
     "alt-f6": "latex-tools:clean-linter",
     "ctrl-f6": "latex-tools:kill-and-clean",
+    // typst-tools binds the same command; this one had it in the menu alone.
+    "shift-f5": "latex-tools:interrupt-all",
     "f7": "latex-tools:open-pdf",
     "alt-f7": "latex-tools:synctex",
     "f8": "latex-tools:open-pdf-external"
