@@ -1,5 +1,7 @@
 {
-  "atom-text-editor[data-grammar~=\"latex\"]": {
+  // :not([mini]) so these never reach a find field or a commit box, matching
+  // tasklist-tools. The handlers act on the file the grammar belongs to.
+  "atom-text-editor[data-grammar~=\"latex\"]:not([mini])": {
     "f5": "latex-tools:compile",
     "alt-f5": "latex-tools:toggle-compile-on-save",
     "ctrl-f5": "latex-tools:interrupt",
