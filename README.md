@@ -32,13 +32,13 @@ The status bar item shows the build state of the active file with a live timer (
 
 ## Commands
 
-Commands available in `atom-workspace`:
+Commands available in `lumine-workspace`:
 
 - `latex-tools:global-rc`: open the global `latexmkrc` configuration file (creates it if missing),
 - `latex-tools:observed-files`: list files observed for compile-on-save,
 - `latex-tools:clear-all-observed-files`: stop observing all compile-on-save files.
 
-Commands available in `atom-text-editor[data-grammar~="latex"]`:
+Commands available in `lumine-text-editor[data-grammar~="latex"]`:
 
 - `latex-tools:compile`: compile the current LaTeX document using `latexmk`,
 - `latex-tools:toggle-compile-on-save`: toggle automatic compilation when the active file is saved,

@@ -64,7 +64,7 @@ type LatexTools = {
 ## Minimal example
 
 ```js
-const { CompositeDisposable, Disposable } = require("atom");
+const { CompositeDisposable, Disposable } = require("lumine");
 
 module.exports = {
   consumeLatexTools(latexTools) {

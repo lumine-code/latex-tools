@@ -2,13 +2,13 @@ describe("latex-tools item actions", () => {
   let list;
 
   beforeEach(async () => {
-    jasmine.attachToDOM(atom.views.getView(atom.workspace));
-    const pkg = await atom.packages.activatePackage("latex-tools");
+    jasmine.attachToDOM(lumine.views.getView(lumine.workspace));
+    const pkg = await lumine.packages.activatePackage("latex-tools");
     list = pkg.mainModule.observedFilesList;
   });
 
   afterEach(async () => {
-    await atom.packages.deactivatePackage("latex-tools");
+    await lumine.packages.deactivatePackage("latex-tools");
   });
 
   it("derives its action from the command registration and the keymap", () => {
@@ -31,7 +31,7 @@ describe("latex-tools item actions", () => {
     await list.selectList.showItemActions();
 
     expect(list.selectList.itemActionsList.isVisible()).toBeTruthy();
-    expect(atom.workspace.getModalTrail()).toEqual(["Observed Files", "Actions"]);
+    expect(lumine.workspace.getModalTrail()).toEqual(["Observed Files", "Actions"]);
     // The actions list wears the package class, so the package keymap
     // resolves action keystrokes inside it too.
     expect(

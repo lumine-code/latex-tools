@@ -13,9 +13,9 @@ describe("latex-tools", () => {
 
   beforeEach(async () => {
     tempDirs = [];
-    workspaceElement = atom.views.getView(atom.workspace);
+    workspaceElement = lumine.views.getView(lumine.workspace);
     jasmine.attachToDOM(workspaceElement);
-    const pack = await atom.packages.activatePackage("latex-tools");
+    const pack = await lumine.packages.activatePackage("latex-tools");
     mainModule = pack.mainModule;
   });
 
@@ -33,7 +33,7 @@ describe("latex-tools", () => {
 
   describe("command registration", () => {
     it("registers the workspace commands", () => {
-      const commands = atom.commands
+      const commands = lumine.commands
         .findCommands({ target: workspaceElement })
         .map((command) => command.name);
       for (const name of [
@@ -46,10 +46,10 @@ describe("latex-tools", () => {
     });
 
     it("registers the build commands on latex editors", async () => {
-      const editor = await atom.workspace.open();
-      const editorElement = atom.views.getView(editor);
+      const editor = await lumine.workspace.open();
+      const editorElement = lumine.views.getView(editor);
       editorElement.dataset.grammar = "text tex latex";
-      const commands = atom.commands
+      const commands = lumine.commands
         .findCommands({ target: editorElement })
         .map((command) => command.name);
       for (const name of [
@@ -418,12 +418,12 @@ describe("latex-tools", () => {
       });
 
       it("drops both low-priority tiers below extended verbosity", () => {
-        atom.config.set("latex-tools.outputVerbosity", "default");
+        lumine.config.set("latex-tools.outputVerbosity", "default");
         expect(setAll()).toEqual(["error", "warning"]);
       });
 
       it("keeps info and hint messages when verbosity is extended", () => {
-        atom.config.set("latex-tools.outputVerbosity", "extended");
+        lumine.config.set("latex-tools.outputVerbosity", "extended");
         expect(setAll()).toEqual(["error", "warning", "info", "hint"]);
       });
     });
