@@ -16,7 +16,7 @@ Includes SyncTeX support, compile-on-save, integrated linting, and multiple buil
 
 ## Installation
 
-To install `latex-tools` search for _latex-tools_ in the Install pane of the Lumine settings or run `lumine --install lumine-code/latex-tools`.
+To install `latex-tools` search for it in the Install pane of the Lumine settings, or run the command `lumine --install lumine-code/latex-tools`.
 
 ## Usage
 
@@ -69,10 +69,10 @@ The status-bar item can be restyled from your `styles.css`, e.g.:
 
 ## Services
 
-- **[latex-tools](docs/latex-tools.md)** (`1.0.0`): provided to let other packages drive LaTeX compilation — subscribe to build events (`onDidStartBuild`, `onDidFinishBuild`, `onDidFailBuild`, `onDidChangeBuildStatus`), query status (`getStatus`, `isBuilding`), control builds (`compile`, `interrupt`, `interruptAll`), and resolve SyncTeX positions (`syncToPdf`, `syncToSource`).
-- **status-bar** (`^1.0.0`): consumed to show the build state, timer, and observed-files counter in the status bar.
-- **open-external** (`^1.0.0`): consumed to open generated PDFs in an external viewer.
-- **linter.registry** (`^1.0.0`): consumed to report LaTeX errors, warnings, infos, and hints in the linter panel.
+- [`latex-tools`](docs/latex-tools.md): provided to let other packages drive LaTeX compilation — subscribe to build events (`onDidStartBuild`, `onDidFinishBuild`, `onDidFailBuild`, `onDidChangeBuildStatus`), query status (`getStatus`, `isBuilding`), control builds (`compile`, `interrupt`, `interruptAll`), and resolve SyncTeX positions (`syncToPdf`, `syncToSource`).
+- `status-bar`: consumed to show the build state, timer, and observed-files counter in the status bar.
+- `open-external`: consumed to open generated PDFs in an external viewer.
+- `linter.registry`: consumed to report LaTeX errors, warnings, infos, and hints in the linter panel.
 
 ## Contributing
 
