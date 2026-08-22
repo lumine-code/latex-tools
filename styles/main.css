@@ -50,11 +50,6 @@
 .latex-tools-observed-status {
   padding: 0 0.5em;
   cursor: default;
-
-  &:hover {
-    background-color: var(--background-color-highlight);
-    opacity: 0.8;
-  }
 }
 
 @keyframes latex-pulse {
