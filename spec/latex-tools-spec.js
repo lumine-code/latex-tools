@@ -188,6 +188,65 @@ describe("latex-tools", () => {
     });
   });
 
+  describe("status-bar compilation", () => {
+    it("compiles an existing source without an open editor", async () => {
+      const directory = makeTempDir();
+      const sourceFile = path.join(directory, "document.tex");
+      fs.writeFileSync(sourceFile, "content");
+      mainModule.currentTexFile = sourceFile;
+      spyOn(lumine.workspace, "getActiveTextEditor").and.returnValue(null);
+      spyOn(lumine.workspace, "getTextEditors").and.returnValue([]);
+      spyOn(mainModule, "checkBuildStatus").and.returnValue(false);
+      spyOn(mainModule, "runCompilation");
+
+      await mainModule.compileFromStatusBar();
+
+      expect(mainModule.runCompilation).toHaveBeenCalledWith(sourceFile);
+    });
+
+    it("recreates a removed child before resolving and saving its root", async () => {
+      const directory = makeTempDir();
+      const childFile = path.join(directory, "child.tex");
+      const rootFile = path.join(directory, "root.tex");
+      fs.writeFileSync(rootFile, "root before save");
+      mainModule.currentTexFile = childFile;
+      spyOn(lumine.workspace, "getActiveTextEditor").and.returnValue(null);
+
+      let finishRootSave;
+      const childEditor = {
+        getPath: () => childFile,
+        getFileState: () => lumine.FileState.REMOVED,
+        save: jasmine.createSpy("save-child").and.callFake(async () => {
+          fs.writeFileSync(childFile, "% !TEX root = root.tex\nchild");
+        }),
+      };
+      const rootEditor = {
+        getPath: () => rootFile,
+        getFileState: () => lumine.FileState.MODIFIED,
+        save: jasmine.createSpy("save-root").and.callFake(
+          () =>
+            new Promise((resolve) => {
+              finishRootSave = resolve;
+            }),
+        ),
+      };
+      spyOn(lumine.workspace, "getTextEditors").and.returnValue([childEditor, rootEditor]);
+      spyOn(mainModule, "checkBuildStatus").and.returnValue(false);
+      spyOn(mainModule, "runCompilation");
+
+      const compiling = mainModule.compileFromStatusBar();
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(childEditor.save).toHaveBeenCalled();
+      expect(rootEditor.save).toHaveBeenCalled();
+      expect(mainModule.runCompilation).not.toHaveBeenCalled();
+
+      finishRootSave();
+      await compiling;
+      expect(mainModule.runCompilation).toHaveBeenCalledWith(rootFile);
+    });
+  });
+
   describe("compile-on-save observation", () => {
     it("observes and unobserves files, emitting service events", () => {
       const dir = makeTempDir();
