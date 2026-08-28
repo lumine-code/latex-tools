@@ -51,9 +51,11 @@ Commands available in `lumine-text-editor[data-grammar~="latex"]`:
 - `latex-tools:synctex`: jump from source to corresponding PDF location (forward SyncTeX),
 - `latex-tools:open-pdf-external`: open the generated PDF in an external viewer.
 
-Commands available in `.latex-tools-observed-files-list`:
+Actions shown for `.latex-tools-observed-files-list`:
 
-- `latex-tools:unobserve-selected-file`: stop observing the selected file.
+- `latex-tools:open-selected-file`: open the selected observed file,
+- `latex-tools:unobserve-selected-file`: stop observing the selected file,
+- `latex-tools:clear-all-observed-files`: stop observing all compile-on-save files.
 
 ## Customization
 
