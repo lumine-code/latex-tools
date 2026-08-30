@@ -247,6 +247,36 @@ describe("latex-tools", () => {
     });
   });
 
+  describe("forward SyncTeX", () => {
+    it("does not refocus a detached source after opening the PDF", async () => {
+      const sourceFile = path.join(makeTempDir(), "document.tex");
+      const pdfFile = sourceFile.replace(/\.tex$/, ".pdf");
+      fs.writeFileSync(sourceFile, "source");
+      const editor = await lumine.workspace.open(sourceFile);
+      const sourceView = lumine.views.getView(editor);
+      const focusSource = spyOn(sourceView, "focus");
+      const viewer = {
+        whenReady: jasmine.createSpy("whenReady").and.returnValue(Promise.resolve()),
+        scrollToPosition: jasmine.createSpy("scrollToPosition"),
+      };
+      spyOn(mainModule, "syncToPdf").and.returnValue(
+        Promise.resolve({ pdfPath: pdfFile, page: 3, x: 12, y: 34 }),
+      );
+      const open = spyOn(lumine.workspace, "open").and.returnValue(Promise.resolve(viewer));
+      spyOn(lumine.workspace, "paneForItem").and.returnValue({ isDetached: () => true });
+
+      await mainModule.synctex();
+
+      expect(open).toHaveBeenCalledWith(pdfFile, {
+        split: "right",
+        searchAllPanes: true,
+      });
+      expect(viewer.whenReady).toHaveBeenCalled();
+      expect(viewer.scrollToPosition).toHaveBeenCalledWith(2, 12, 34);
+      expect(focusSource).not.toHaveBeenCalled();
+    });
+  });
+
   describe("compile-on-save observation", () => {
     it("observes and unobserves files, emitting service events", () => {
       const dir = makeTempDir();
