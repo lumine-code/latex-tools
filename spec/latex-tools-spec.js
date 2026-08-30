@@ -248,7 +248,7 @@ describe("latex-tools", () => {
   });
 
   describe("forward SyncTeX", () => {
-    it("does not refocus a detached source after opening the PDF", async () => {
+    it("opens the PDF and returns focus to its source", async () => {
       const sourceFile = path.join(makeTempDir(), "document.tex");
       const pdfFile = sourceFile.replace(/\.tex$/, ".pdf");
       fs.writeFileSync(sourceFile, "source");
@@ -263,7 +263,6 @@ describe("latex-tools", () => {
         Promise.resolve({ pdfPath: pdfFile, page: 3, x: 12, y: 34 }),
       );
       const open = spyOn(lumine.workspace, "open").and.returnValue(Promise.resolve(viewer));
-      spyOn(lumine.workspace, "paneForItem").and.returnValue({ isDetached: () => true });
 
       await mainModule.synctex();
 
@@ -273,7 +272,7 @@ describe("latex-tools", () => {
       });
       expect(viewer.whenReady).toHaveBeenCalled();
       expect(viewer.scrollToPosition).toHaveBeenCalledWith(2, 12, 34);
-      expect(focusSource).not.toHaveBeenCalled();
+      expect(focusSource).toHaveBeenCalled();
     });
   });
 
