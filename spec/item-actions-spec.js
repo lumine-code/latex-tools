@@ -1,5 +1,7 @@
+const { Icon } = require("lumine");
+
 describe("latex-tools item actions", () => {
-  let list;
+  let list, iconRegistration;
 
   const item = {
     filePath: "C:\\project\\document.tex",
@@ -9,7 +11,7 @@ describe("latex-tools item actions", () => {
 
   function setItems(items) {
     list.items = items;
-    list.selectList.update({ items });
+    return list.selectList.update({ items });
   }
 
   beforeEach(async () => {
@@ -19,7 +21,29 @@ describe("latex-tools item actions", () => {
   });
 
   afterEach(async () => {
+    iconRegistration?.dispose();
     await lumine.packages.deactivatePackage("latex-tools");
+  });
+
+  it("routes observed file paths through the shared icon registry", async () => {
+    await setItems([item]);
+    const line = list.selectList.element.querySelector(".primary-line");
+    expect(line).toHaveClass("icon-file-text");
+
+    iconRegistration = lumine.icons.addProvider(
+      {
+        id: "latex-tools-observed-files-spec",
+        handles: ["path"],
+        usesContext: true,
+        iconFor(target) {
+          return target.context === "latex-tools-observed-files"
+            ? Icon.classes(["icon-flame"])
+            : null;
+        },
+      },
+      { priority: 100 },
+    );
+    expect(line).toHaveClass("icon-flame");
   });
 
   it("derives its item and list actions from command registrations and the keymap", () => {
