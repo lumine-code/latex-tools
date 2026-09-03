@@ -47,6 +47,7 @@ describe("latex-tools item actions", () => {
   });
 
   it("derives its item and list actions from command registrations and the keymap", () => {
+    list.selectListHost.getPanel();
     setItems([item]);
     const actions = list.selectList.getAvailableActions();
     const byCommand = new Map(actions.map((action) => [action.command, action]));
@@ -97,7 +98,7 @@ describe("latex-tools item actions", () => {
     await list.show();
     await setItems([item]);
 
-    await list.selectList.showActions();
+    await list.selectListHost.showActions();
 
     expect(lumine.workspace.getModalTrail()).toEqual(["Observed Files", "Actions"]);
 
@@ -106,6 +107,6 @@ describe("latex-tools item actions", () => {
     await list.selectList.runAction("latex-tools:unobserve-selected-file");
 
     expect(spy).toHaveBeenCalled();
-    expect(list.selectList.isVisible()).toBeTruthy();
+    expect(list.selectListHost.isVisible()).toBeTruthy();
   });
 });
