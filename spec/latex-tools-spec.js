@@ -19,15 +19,11 @@ describe("latex-tools", () => {
     mainModule = pack.mainModule;
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    mainModule.clearCompileOnSaveFiles();
+    await lumine.fileWatchClient.settlePendingTeardown();
     for (const dir of tempDirs) {
-      try {
-        // Retries because Windows keeps a directory non-empty until the last handle on a
-        // child closes, and `force` swallows only ENOENT.
-        fs.rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
-      } catch {
-        // Windows can refuse to delete recently watched directories.
-      }
+      fs.rmSync(dir, { recursive: true, force: true });
     }
   });
 
@@ -248,12 +244,18 @@ describe("latex-tools", () => {
   });
 
   describe("forward SyncTeX", () => {
+    let sourceEditor;
+
+    afterEach(() => {
+      sourceEditor?.destroy();
+    });
+
     it("opens the PDF and returns focus to its source", async () => {
       const sourceFile = path.join(makeTempDir(), "document.tex");
       const pdfFile = sourceFile.replace(/\.tex$/, ".pdf");
       fs.writeFileSync(sourceFile, "source");
-      const editor = await lumine.workspace.open(sourceFile);
-      const sourceView = lumine.views.getView(editor);
+      sourceEditor = await lumine.workspace.open(sourceFile);
+      const sourceView = lumine.views.getView(sourceEditor);
       const focusSource = spyOn(sourceView, "focus");
       const viewer = {
         whenReady: jasmine.createSpy("whenReady").and.returnValue(Promise.resolve()),
