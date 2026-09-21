@@ -464,12 +464,21 @@ describe("latex-tools", () => {
   describe("linter integration", () => {
     it("registers an indie linter through the linter.registry service", () => {
       const registered = [];
-      mainModule.consumeLinterRegistry((options) => {
+      const indie = {
+        setAllMessages() {},
+        clearMessages() {},
+        dispose: jasmine.createSpy("dispose"),
+      };
+      const registration = mainModule.consumeLinterRegistry((options) => {
         registered.push(options);
-        return { setAllMessages() {}, clearMessages() {}, dispose() {} };
+        return indie;
       });
       expect(registered).toEqual([{ name: "LaTeX" }]);
-      expect(mainModule.linterProvider.indieInstance).toBeTruthy();
+      expect(mainModule.linterProvider.indieInstance).toBe(indie);
+
+      registration.dispose();
+      expect(indie.dispose).toHaveBeenCalled();
+      expect(mainModule.linterProvider.indieInstance).toBeNull();
     });
 
     describe("verbosity filtering", () => {
@@ -523,20 +532,26 @@ describe("latex-tools", () => {
     it("adds left and right tiles through the status-bar service", () => {
       const left = [];
       const right = [];
-      mainModule.consumeStatusBar({
+      const leftTile = { destroy: jasmine.createSpy("destroy left tile") };
+      const rightTile = { destroy: jasmine.createSpy("destroy right tile") };
+      const registration = mainModule.consumeStatusBar({
         addLeftTile(tile) {
           left.push(tile);
-          return { destroy() {} };
+          return leftTile;
         },
         addRightTile(tile) {
           right.push(tile);
-          return { destroy() {} };
+          return rightTile;
         },
       });
       expect(left.length).toBe(1);
       expect(left[0].item.classList.contains("latex-tools-status")).toBe(true);
       expect(right.length).toBe(1);
       expect(right[0].item.classList.contains("latex-tools-observed-status")).toBe(true);
+
+      registration.dispose();
+      expect(leftTile.destroy).toHaveBeenCalled();
+      expect(rightTile.destroy).toHaveBeenCalled();
     });
 
     it("marks the label when compile-on-save is enabled", () => {
