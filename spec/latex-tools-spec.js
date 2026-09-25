@@ -561,6 +561,32 @@ describe("latex-tools", () => {
       view.setCompileOnSave(false);
       expect(view.label.textContent).toBe("TeX");
     });
+
+    it("does not let a late build update restore the tile over another center item", async () => {
+      const directory = makeTempDir();
+      const texFile = path.join(directory, "document.tex");
+      fs.writeFileSync(texFile, "\\documentclass{article}");
+      const editor = await lumine.workspace.open(texFile);
+      const pane = lumine.workspace.getCenter().getActivePane();
+
+      expect(mainModule.currentTexFile).toBe(texFile);
+      expect(mainModule.statusBarView.element.style.display).toBe("");
+
+      const otherItem = document.createElement("div");
+      pane.addItem(otherItem);
+      pane.activateItem(otherItem);
+
+      expect(mainModule.currentTexFile).toBeNull();
+      expect(mainModule.statusBarView.element.style.display).toBe("none");
+
+      if (mainModule.isStatusBarActiveFor(texFile)) {
+        mainModule.statusBarView.setStatus("success");
+      }
+      expect(mainModule.statusBarView.element.style.display).toBe("none");
+
+      pane.activateItem(editor);
+      await pane.destroyItem(otherItem);
+    });
   });
 
   describe("open-external integration", () => {
