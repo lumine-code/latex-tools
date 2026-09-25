@@ -19,9 +19,6 @@
   "engines": {
     "lumine": "^1.0.0"
   },
-  "backgroundTips": [
-    "You can compile the LaTeX document you are editing with {{ 'latex-tools:compile' | keystroke }}"
-  ],
   "main": "./lib/main",
   "files": [
     "docs",
@@ -41,6 +38,11 @@
     "latex-tools": {
       "versions": {
         "1.0.0": "provideLatexTools"
+      }
+    },
+    "background-tips.provider": {
+      "versions": {
+        "1.0.0": "provideBackgroundTips"
       }
     }
   },
