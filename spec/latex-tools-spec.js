@@ -211,14 +211,14 @@ describe("latex-tools", () => {
       let finishRootSave;
       const childEditor = {
         getPath: () => childFile,
-        getFileState: () => lumine.FileState.REMOVED,
+        getFileState: () => "removed",
         save: jasmine.createSpy("save-child").and.callFake(async () => {
           fs.writeFileSync(childFile, "% !TEX root = root.tex\nchild");
         }),
       };
       const rootEditor = {
         getPath: () => rootFile,
-        getFileState: () => lumine.FileState.MODIFIED,
+        getFileState: () => "modified",
         save: jasmine.createSpy("save-root").and.callFake(
           () =>
             new Promise((resolve) => {
