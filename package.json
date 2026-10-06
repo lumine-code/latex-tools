@@ -94,7 +94,7 @@
       "title": "Enable SyncTeX",
       "description": "Enable SyncTeX for forward and backward search between source and PDF. Required for synctex features.",
       "type": "boolean",
-      "default": false
+      "default": true
     },
     "synctexPath": {
       "title": "Path to SyncTeX",
