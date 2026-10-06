@@ -54,6 +54,41 @@ describe("latex-tools PDF opening notifications", () => {
     expect(mainModule._openPdfExternalDirect).toHaveBeenCalledOnceWith(externalPath);
   });
 
+  it("waits for a newer build instead of opening the previous build's output", () => {
+    const externalPath = path.resolve("external.pdf");
+    service.startBuild(sourcePath);
+    mainModule.waitForBuildAndOpen(sourcePath, pdfPath);
+    service.finishBuild(sourcePath, "", 1);
+    service.startBuild(sourcePath);
+    mainModule.waitForBuildAndOpen(sourcePath, externalPath, true);
+    advanceClock(100);
+
+    expect(mainModule._openPdfDirect).not.toHaveBeenCalled();
+    expect(mainModule._openPdfExternalDirect).not.toHaveBeenCalled();
+    expect(mainModule.pendingPdfOpens.size).toBe(1);
+
+    service.finishBuild(sourcePath, "", 1);
+    advanceClock(100);
+    expect(mainModule._openPdfDirect).not.toHaveBeenCalled();
+    expect(mainModule._openPdfExternalDirect).toHaveBeenCalledOnceWith(externalPath);
+    expect(mainModule.pendingPdfOpens.size).toBe(0);
+  });
+
+  it("does not open stale output when a newer build fails during the open delay", () => {
+    service.startBuild(sourcePath);
+    mainModule.waitForBuildAndOpen(sourcePath, pdfPath);
+    service.finishBuild(sourcePath, "", 1);
+    service.startBuild(sourcePath);
+    mainModule.waitForBuildAndOpen(sourcePath, pdfPath);
+    service.failBuild(sourcePath, "Compiler error", "");
+    advanceClock(100);
+
+    expect(mainModule._openPdfDirect).not.toHaveBeenCalled();
+    expect(mainModule._openPdfExternalDirect).not.toHaveBeenCalled();
+    expect(mainModule.pendingPdfOpens.size).toBe(0);
+    expect(lumine.notifications.addWarning).not.toHaveBeenCalled();
+  });
+
   for (const reason of ["Compiler error", "Build interrupted by user"]) {
     it(`clears the wait without another warning after ${reason.toLowerCase()}`, () => {
       mainModule.waitForBuildAndOpen(sourcePath, pdfPath);
