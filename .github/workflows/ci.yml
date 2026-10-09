@@ -44,8 +44,12 @@ jobs:
   integration:
     # Run the Jasmine spec suite inside a real Lumine build; the specs exercise
     # the editor runtime (text editors, modal panels, and command dispatch).
-    name: Lumine integration specs
-    runs-on: ubuntu-latest
+    name: Lumine integration specs on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
     timeout-minutes: 60
     env:
       LUMINE_JASMINE_REPORTER: list
@@ -63,6 +67,7 @@ jobs:
           cache: npm
           cache-dependency-path: lumine/package-lock.json
       - name: Install Linux build and headless-display dependencies
+        if: runner.os == 'Linux'
         run: |
           # A third-party repository on the runner image answering 403 must not
           # fail the job: the lists this actually needs still fetched, and the
@@ -78,6 +83,7 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Install editor dependencies
         working-directory: lumine
+        shell: bash
         run: |
           install() { npm ci --ignore-scripts; }
           install || install || install
@@ -90,4 +96,8 @@ jobs:
       - name: Run the Jasmine spec suite
         working-directory: lumine
         timeout-minutes: 20
-        run: xvfb-run --auto-servernum npm start -- --test ../latex-tools/spec
+        shell: bash
+        run: |
+          prefix=""
+          if [ "$RUNNER_OS" = "Linux" ]; then prefix="xvfb-run --auto-servernum"; fi
+          $prefix npm start -- --test ../latex-tools/spec
