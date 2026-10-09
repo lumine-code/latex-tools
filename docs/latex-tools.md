@@ -43,23 +43,25 @@ type LatexTools = {
   isAnyBuilding(): boolean;
   getMessages(filePath?: string): object[];
   getMessageStatistics(filePath?: string): object;
-  getOutputPath(filePath: string): string;
+  getOutputPath(filePath: string): string | null;
   resolveRoot(filePath: string): string;
 
   // Control
-  compile(filePath: string): Promise<void>;
-  interrupt(filePath: string): void;
-  interruptAll(): void;
-  setCompileOnSave(editor: TextEditor, enabled: boolean): void;
+  compile(filePath: string): boolean;
+  interrupt(filePath: string): boolean;
+  interruptAll(): number;
+  setCompileOnSave(editor: TextEditor, enabled: boolean): boolean;
   isCompileOnSaveEnabled(editor: TextEditor): boolean;
+  syncToPdf(texPath: string, line: number, column?: number): Promise<object | null>;
+  syncToSource(pdfPath: string, page: number, x: number, y: number): Promise<object | null>;
 };
 ```
 
-| Group   | Notes                                                                                                              |
-| ------- | ------------------------------------------------------------------------------------------------------------------ |
-| Events  | All return a `Disposable`. `onDidChangeBuildStatus` is the coarse one to drive an indicator from.                  |
-| Status  | Every reader takes an **optional** `filePath`; omitting it answers for the whole project rather than one document. |
-| Control | `compile` resolves when the build finishes. `interruptAll` stops every running build.                              |
+| Group   | Notes                                                                                                                                                              |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Events  | All return a `Disposable`. `onDidChangeBuildStatus` is the coarse one to drive an indicator from.                                                                  |
+| Status  | `getStatus()` reports all tracked builds. Omitting the path from diagnostic readers uses the active text editor.                                                   |
+| Control | `compile` returns whether the build started; completion arrives through build events. `interruptAll` stops every running build and returns the number interrupted. |
 
 ## Minimal example
 
@@ -71,8 +73,9 @@ module.exports = {
     this.latex = latexTools;
     const disposables = new CompositeDisposable();
     disposables.add(
-      latexTools.onDidFinishBuild(({ filePath }) => {
-        this.showPdf(latexTools.getOutputPath(filePath));
+      latexTools.onDidFinishBuild(({ file }) => {
+        const pdfPath = latexTools.getOutputPath(file);
+        if (pdfPath) this.showPdf(pdfPath);
       }),
       new Disposable(() => (this.latex = null)),
     );
@@ -83,9 +86,9 @@ module.exports = {
 
 ## Behavior
 
-**`resolveRoot` is the one to reach for first.** A LaTeX project compiles from a root document, which is usually not the file the user is editing; passing the edited path to `compile` or `getOutputPath` without resolving the root first builds the wrong thing. `typst-tools` has no equivalent, which is the main difference between the two services.
+`resolveRoot` identifies the root document for an edited source file. `compile` and `getOutputPath` also resolve that root internally, so callers may pass a child source path directly. `typst-tools` has no equivalent root discovery.
 
-`getOutputPath` answers from configuration, not from the filesystem — it is valid before a build has ever run, and does not imply the file exists.
+`getOutputPath` resolves the build root and returns its PDF path only when the file exists; otherwise it returns `null`.
 
 `onDidFailBuild` and `onDidFinishBuild` are mutually exclusive per build; `onDidChangeBuildStatus` fires for both plus the transitions in between, so drive a status indicator from that one and act on the specific two.
 

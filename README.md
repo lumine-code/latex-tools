@@ -36,10 +36,7 @@ Commands available in `lumine-workspace`:
 
 - `latex-tools:global-rc`: open the global `latexmkrc` configuration file (creates it if missing),
 - `latex-tools:observed-files`: list files observed for compile-on-save,
-- `latex-tools:clear-all-observed-files`: stop observing all compile-on-save files.
-
-Commands available in `lumine-text-editor[data-grammar~="latex"]`:
-
+- `latex-tools:clear-all-observed-files`: stop observing all compile-on-save files,
 - `latex-tools:compile`: compile the current LaTeX document using `latexmk`,
 - `latex-tools:toggle-compile-on-save`: toggle automatic compilation when the active file is saved,
 - `latex-tools:interrupt`: stop the current build process for the active file,
@@ -50,6 +47,8 @@ Commands available in `lumine-text-editor[data-grammar~="latex"]`:
 - `latex-tools:open-pdf`: open the generated PDF in Lumine,
 - `latex-tools:synctex`: jump from source to corresponding PDF location (forward SyncTeX),
 - `latex-tools:open-pdf-external`: open the generated PDF in an external viewer.
+
+The build keybindings are scoped to LaTeX editors. Commands resolve the active saved LaTeX file when dispatched from the menu or command palette.
 
 Actions shown for `.latex-tools-observed-files-list`:
 
