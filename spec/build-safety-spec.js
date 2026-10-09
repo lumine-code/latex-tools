@@ -31,7 +31,7 @@ describe("LaTeX build data and process ownership", () => {
     const helper = path.join(directory, "compiler.cjs");
     fs.writeFileSync(
       helper,
-      'process.stdout.write("ready"); process.stdin.once("data", () => process.exit(0));',
+      'process.stdout.write("ready"); process.stdin.once("data", (data) => process.exit(Number(data) || 0));',
     );
     nativeSpawn = cp.spawn;
     spyOn(cp, "spawn").and.callFake((command) => {
@@ -165,5 +165,90 @@ describe("LaTeX build data and process ownership", () => {
     child.stdin.write("finish\n");
     await exit(child);
     expect(main.buildProcesses.has(file)).toBe(false);
+  });
+
+  for (const code of [0, 1]) {
+    it(`keeps the next command build live when message delivery reenters a completion with code ${code}`, async () => {
+      const file = path.join(directory, "document.tex");
+      fs.writeFileSync(file, "owned source");
+      await lumine.workspace.open(file);
+      main.parseLogFile.and.callThrough();
+      const service = main.provideLatexTools();
+      const completed = jasmine.createSpy("accepted completion");
+      const completionLease =
+        code === 0 ? service.onDidFinishBuild(completed) : service.onDidFailBuild(completed);
+      let reentered = false;
+      const messagesLease = service.onDidUpdateMessages(() => {
+        if (reentered) return;
+        reentered = true;
+        lumine.commands.dispatch(lumine.workspace.getElement(), "latex-tools:compile");
+      });
+      const statuses = [];
+      const statusLease = service.onDidChangeBuildStatus(({ status }) => statuses.push(status));
+      try {
+        lumine.commands.dispatch(lumine.workspace.getElement(), "latex-tools:compile");
+        const first = children[0];
+        await ready(first);
+        first.stdin.write(`${code}\n`);
+        await exit(first);
+        expect(reentered).toBe(true);
+        expect(completed).toHaveBeenCalledTimes(1);
+        expect(children.length).toBe(2);
+        const second = children[1];
+        expect(main.buildProcesses.get(file)?.process).toBe(second);
+        expect(service.isBuilding(file)).toBe(true);
+        expect(statuses.at(-1)).toBe("building");
+        await ready(second);
+        second.stdin.write("0\n");
+        await exit(second);
+        expect(service.isBuilding(file)).toBe(false);
+        expect(service.getStatus(file).status).toBe("success");
+        expect(completed.calls.count()).toBe(code === 0 ? 2 : 1);
+      } finally {
+        messagesLease.dispose();
+        completionLease.dispose();
+        statusLease.dispose();
+      }
+    });
+  }
+
+  it("does not launch a compiler after native build-start delivery retires the package", async () => {
+    const file = path.join(directory, "document.tex");
+    fs.writeFileSync(file, "owned source");
+    await lumine.workspace.open(file);
+    const service = main.provideLatexTools();
+    let retiring;
+    const lease = service.onDidStartBuild(() => {
+      retiring = main.deactivate();
+    });
+    try {
+      lumine.commands.dispatch(lumine.workspace.getElement(), "latex-tools:compile");
+      await retiring;
+      expect(main.subscriptions.disposed).toBe(true);
+      expect(service.compile(file)).toBe(false);
+      expect(children.length).toBe(0);
+    } finally {
+      lease.dispose();
+    }
+  });
+
+  it("finishes the service state when the tracked native child terminates by signal", async () => {
+    const file = path.join(directory, "document.tex");
+    fs.writeFileSync(file, "owned source");
+    const service = main.provideLatexTools();
+    const failed = jasmine.createSpy("signal failure");
+    const lease = service.onDidFailBuild(failed);
+    try {
+      main.runCompilation(file);
+      const child = children[0];
+      await ready(child);
+      child.kill();
+      await exit(child);
+      expect(main.buildProcesses.has(file)).toBe(false);
+      expect(service.isBuilding(file)).toBe(false);
+      expect(failed).toHaveBeenCalledTimes(1);
+    } finally {
+      lease.dispose();
+    }
   });
 });
