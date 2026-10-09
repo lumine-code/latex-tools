@@ -91,8 +91,13 @@ describe("LaTeX build data and process ownership", () => {
       directory,
       process.platform === "win32" ? "custom-sync.exe" : "custom-sync",
     );
-    fs.copyFileSync(nodePath, binary);
-    if (process.platform !== "win32") fs.chmodSync(binary, 0o755);
+    if (process.platform === "win32") fs.copyFileSync(nodePath, binary);
+    else {
+      // Homebrew Node loads a sibling libnode dylib. Keep that interpreter
+      // in place and forward each literal argument through the owned launcher.
+      const quotedNode = "'" + nodePath.replace(/'/g, "'\\''") + "'";
+      fs.writeFileSync(binary, `#!/bin/sh\nexec ${quotedNode} "$@"\n`, { mode: 0o755 });
+    }
     const shim = path.join(directory, "synctex-shim.cjs");
     const receipt = path.join(directory, "arguments.json");
     const source = path.join(directory, "source & document.tex");
