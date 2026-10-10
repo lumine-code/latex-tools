@@ -53,6 +53,10 @@ jobs:
     timeout-minutes: 60
     env:
       LUMINE_JASMINE_REPORTER: list
+      LUMINE_DISABLE_SHELLING_OUT_FOR_ENVIRONMENT: "true"
+      TEMP: ${{ github.workspace }}/latex-spec-tmp
+      TMP: ${{ github.workspace }}/latex-spec-tmp
+      TMPDIR: ${{ github.workspace }}/latex-spec-tmp
     steps:
       - uses: actions/checkout@v7
         with:
@@ -78,6 +82,9 @@ jobs:
       # no ssh key, so rewrite them to anonymous HTTPS (the forks are public).
       - name: Use HTTPS for GitHub git dependencies
         run: git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+      - name: Create the private temporary directory
+        shell: bash
+        run: mkdir -p "$TEMP"
       - name: Install package dependencies
         working-directory: latex-tools
         run: npm ci --ignore-scripts
@@ -93,6 +100,10 @@ jobs:
       - name: Rebuild native modules for Electron
         working-directory: lumine
         run: npm run build
+      - name: Install spec dependency packages
+        working-directory: lumine
+        shell: bash
+        run: node script/install-spec-packages.js --package ../latex-tools --home "$RUNNER_TEMP/lumine-home" --github-env "$GITHUB_ENV"
       - name: Run the Jasmine spec suite
         working-directory: lumine
         timeout-minutes: 20

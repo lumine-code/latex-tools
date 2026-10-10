@@ -182,8 +182,8 @@
         "thm",
         "xdv",
         "pyg",
-        "*.bcf*",
-        "*.mtc*"
+        "{basename}.bcf*",
+        "{basename}.mtc*"
       ]
     },
     "debug": {
