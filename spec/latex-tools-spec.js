@@ -573,7 +573,7 @@ describe("latex-tools", () => {
       expect(mainModule.statusBarView.element.style.display).toBe("");
 
       const otherItem = document.createElement("div");
-      otherItem.isSingleton = () => true;
+      otherItem.canCopy = () => false;
       pane.addItem(otherItem);
       pane.activateItem(otherItem);
 
