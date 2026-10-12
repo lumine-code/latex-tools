@@ -82,6 +82,60 @@ describe("LaTeX document cleanup scope", () => {
     expect(fs.existsSync(path.join(directory, "second.aux"))).toBeTrue();
   });
 
+  it("removes bibliography files once despite overlapping default patterns", () => {
+    writeAuxiliaries("bcf");
+    writeAuxiliaries("bcf-SAVE-ERROR");
+    const unlink = spyOn(fs, "unlinkSync").and.callThrough();
+    const success = spyOn(lumine.notifications, "addSuccess").and.callThrough();
+    const warning = spyOn(lumine.notifications, "addWarning").and.callThrough();
+
+    clean();
+
+    expect(unlink.calls.allArgs()).toEqual([
+      [path.join(directory, "first.bcf")],
+      [path.join(directory, "first.bcf-SAVE-ERROR")],
+    ]);
+    expect(success).toHaveBeenCalledOnceWith("Cleaned 2 auxiliary file(s)", {
+      detail: "first.bcf\nfirst.bcf-SAVE-ERROR",
+      dismissable: true,
+    });
+    expect(warning).not.toHaveBeenCalled();
+    for (const extension of ["bcf", "bcf-SAVE-ERROR"]) {
+      expect(fs.existsSync(path.join(directory, `first.${extension}`))).toBeFalse();
+      expect(fs.existsSync(path.join(directory, `second.${extension}`))).toBeTrue();
+    }
+  });
+
+  it("deduplicates wildcard matches before ordinary extension matches", () => {
+    writeAuxiliaries("bcf");
+    lumine.config.set("latex-tools.cleanExtensions", ["{basename}.bcf*", "{basename}.*", "bcf"]);
+    const unlink = spyOn(fs, "unlinkSync").and.callThrough();
+    const warning = spyOn(lumine.notifications, "addWarning").and.callThrough();
+
+    clean();
+
+    expect(unlink).toHaveBeenCalledOnceWith(path.join(directory, "first.bcf"));
+    expect(warning).not.toHaveBeenCalled();
+    expect(fs.existsSync(editor.getPath())).toBeTrue();
+  });
+
+  it("reports an actual deletion failure once when patterns overlap", () => {
+    writeAuxiliaries("bcf");
+    const unlink = spyOn(fs, "unlinkSync").and.throwError(
+      Object.assign(new Error("Permission denied"), { code: "EACCES" }),
+    );
+    const warning = spyOn(lumine.notifications, "addWarning").and.callThrough();
+
+    clean();
+
+    expect(unlink).toHaveBeenCalledOnceWith(path.join(directory, "first.bcf"));
+    expect(warning).toHaveBeenCalledOnceWith("Failed to delete 1 file(s)", {
+      detail: "first.bcf",
+      dismissable: true,
+    });
+    expect(fs.existsSync(path.join(directory, "first.bcf"))).toBeTrue();
+  });
+
   it("preserves a user's explicitly configured directory-wide wildcard", () => {
     writeAuxiliaries("bcf-SAVE-ERROR");
     lumine.config.set("latex-tools.cleanExtensions", ["*.bcf*"]);
