@@ -1,3 +1,4 @@
+const windowService = require("./helpers/window-service");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
@@ -534,16 +535,18 @@ describe("latex-tools", () => {
       const right = [];
       const leftTile = { destroy: jasmine.createSpy("destroy left tile") };
       const rightTile = { destroy: jasmine.createSpy("destroy right tile") };
-      const registration = mainModule.consumeStatusBar({
-        addLeftTile(tile) {
-          left.push(tile);
-          return leftTile;
-        },
-        addRightTile(tile) {
-          right.push(tile);
-          return rightTile;
-        },
-      });
+      const registration = mainModule.consumeStatusBar(
+        windowService({
+          addLeftTile(tile) {
+            left.push(tile);
+            return leftTile;
+          },
+          addRightTile(tile) {
+            right.push(tile);
+            return rightTile;
+          },
+        }),
+      );
       expect(left.length).toBe(1);
       expect(left[0].item.classList.contains("latex-tools-status")).toBe(true);
       expect(right.length).toBe(1);
