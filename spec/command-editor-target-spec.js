@@ -16,7 +16,7 @@ describe("LaTeX Tools document command targets", () => {
     }
     first = await lumine.workspace.open(path.join(directory, "first.tex"));
     const firstPane = lumine.workspace.paneForItem(first);
-    firstPane.splitRight({ copyActiveItem: false });
+    firstPane.splitRight();
     second = await lumine.workspace.open(path.join(directory, "second.tex"));
     firstPane.activate();
     main = (await lumine.packages.activatePackage("latex-tools")).mainModule;
