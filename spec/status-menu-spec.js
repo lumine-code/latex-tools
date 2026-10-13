@@ -59,15 +59,28 @@ describe("latex-tools status menus", () => {
       menu(counter).find((item) => item.command === "latex-tools:observed-files").mouseBindingLabel,
     ).toBe("LMB");
     const options = tooltipCalls.calls.all().find((call) => call.args[0] === tile).args[1];
-    expect(options.keyBindingCommand).toBeUndefined();
+    expect(options.keyBindingCommand).toBe("latex-tools:compile");
+    expect(options.keyBindingTarget()).toBe(editor.getElement());
+    expect(options.html).toBe(false);
     expect(options.keyBindingExtra).toBeUndefined();
     expect(options.title()).toBe("Idle. Compile this document.");
     main.statusBarView.setStatus("building");
     expect(options.title()).toBe("Building. Compile this document.");
     const counterOptions = tooltipCalls.calls.all().find((call) => call.args[0] === counter)
       .args[1];
+    expect(counterOptions.keyBindingCommand).toBe("latex-tools:observed-files");
+    expect(counterOptions.keyBindingTarget).toBe(counter);
+    expect(counterOptions.keyBindingExtra).toBeUndefined();
     main.observedFilesStatusView.setCount(2);
     expect(counterOptions.title()).toBe("2 observed files. Open the list.");
+  });
+  it("resolves the primary keyboard hint from the tile's current editor", async () => {
+    const options = tooltipCalls.calls.all().find((call) => call.args[0] === tile).args[1];
+    const other = await lumine.workspace.open();
+    expect(options.keyBindingTarget()).toBe(other.getElement());
+    spyOn(lumine.workspace, "resolveCommandContext").and.returnValue({ embeddedEditor: null });
+    expect(options.keyBindingTarget()).toBeNull();
+    other.destroy();
   });
   it("opens right-click menus without executing or blocking an action", () => {
     const stop = spyOn(main, "killAndCleanFromStatusBar");
