@@ -79,7 +79,36 @@ describe("latex-tools status menus", () => {
     ).toBe(process.platform === "darwin" ? "\u2303F6" : "Ctrl+F6");
     expect(
       items.find((item) => item.command === "latex-tools:split-pdf-source").keyBindingLabel,
-    ).toBeUndefined();
+    ).toBe("");
+  });
+  it("shows a user-assigned editor shortcut for splitting the document", async () => {
+    editor.getElement().setAttribute("data-grammar", "latex");
+    const userBindings = lumine.keymaps.add("latex-tools-status-user-shortcuts", {
+      'lumine-text-editor[data-grammar~="latex"]:not([mini])': {
+        f9: "latex-tools:split-pdf-source",
+      },
+    });
+    try {
+      const extra = await lumine.workspace.openEditorWindow({ show: false });
+      const other = lumine.workspace.buildTextEditor();
+      extra.getEditorContainer().getActivePane().activateItem(other, { activatePane: true });
+      expect(lumine.workspace.getActiveTextEditor()).toBe(other);
+      const row = () => menu().find((item) => item.command === "latex-tools:split-pdf-source");
+      expect(row().keyBindingLabel).toBe("F9");
+      const element = document.createElement("div");
+      const pdf = {
+        filePath: editor.getPath().replace(/\.tex$/, ".pdf"),
+        getTitle: () => "PDF",
+        getElement: () => element,
+      };
+      const pane = lumine.workspace.getMainWindow().getEditorContainer().getActivePane();
+      pane.activateItem(pdf);
+      expect(row().keyBindingLabel).toBe("");
+      expect(row().enabled).toBe(true);
+      await pane.destroyItem(pdf);
+    } finally {
+      userBindings.dispose();
+    }
   });
   it("keeps shortcut lookup in the tile's window and suppresses it for a PDF", async () => {
     editor.getElement().setAttribute("data-grammar", "latex");
