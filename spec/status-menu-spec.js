@@ -3,10 +3,11 @@ const path = require("node:path");
 const os = require("node:os");
 
 describe("latex-tools status menus", () => {
-  let main, directory, editor, tile, counter;
+  let main, directory, editor, tile, counter, tooltipCalls;
   beforeEach(async () => {
     jasmine.useRealClock();
     jasmine.attachToDOM(lumine.workspace.getElement());
+    tooltipCalls = spyOn(lumine.tooltips, "add").and.callThrough();
     directory = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "latex-tools-status-")));
     await fs.writeFile(path.join(directory, "document.tex"), "source");
     editor = await lumine.workspace.open(path.join(directory, "document.tex"));
@@ -49,6 +50,24 @@ describe("latex-tools status menus", () => {
         .checked,
     ).toBe(true);
     expect(main.runCompilation).not.toHaveBeenCalled();
+    expect(
+      menu()
+        .filter((item) => item.mouseBindingLabel)
+        .map((item) => item.mouseBindingLabel),
+    ).toEqual(["LMB", "Alt+LMB", "MMB"]);
+    expect(
+      menu(counter).find((item) => item.command === "latex-tools:observed-files").mouseBindingLabel,
+    ).toBe("LMB");
+    const options = tooltipCalls.calls.all().find((call) => call.args[0] === tile).args[1];
+    expect(options.keyBindingCommand).toBeUndefined();
+    expect(options.keyBindingExtra).toBeUndefined();
+    expect(options.title()).toBe("Idle. Compile this document.");
+    main.statusBarView.setStatus("building");
+    expect(options.title()).toBe("Building. Compile this document.");
+    const counterOptions = tooltipCalls.calls.all().find((call) => call.args[0] === counter)
+      .args[1];
+    main.observedFilesStatusView.setCount(2);
+    expect(counterOptions.title()).toBe("2 observed files. Open the list.");
   });
   it("opens right-click menus without executing or blocking an action", () => {
     const stop = spyOn(main, "killAndCleanFromStatusBar");

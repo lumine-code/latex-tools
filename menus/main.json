@@ -41,16 +41,19 @@
       },
       {
         "label": "Compile",
-        "command": "latex-tools:compile"
+        "command": "latex-tools:compile",
+        "mouseBindingLabel": "LMB"
       },
       {
         "label": "Compile on Save",
         "type": "checkbox",
-        "command": "latex-tools:toggle-compile-on-save"
+        "command": "latex-tools:toggle-compile-on-save",
+        "mouseBindingLabel": "Alt+LMB"
       },
       {
         "label": "Split PDF and Source",
-        "command": "latex-tools:split-pdf-source"
+        "command": "latex-tools:split-pdf-source",
+        "mouseBindingLabel": "MMB"
       },
       {
         "label": "Stop and Clean",
@@ -66,7 +69,8 @@
       },
       {
         "label": "Observed Files",
-        "command": "latex-tools:observed-files"
+        "command": "latex-tools:observed-files",
+        "mouseBindingLabel": "LMB"
       },
       {
         "label": "Stop Observing All Files",

@@ -57,6 +57,8 @@ Actions shown for `.latex-tools-observed-files-list`:
 - `latex-tools:unobserve-selected-file`: stop observing the selected file,
 - `latex-tools:clear-all-observed-files`: stop observing all compile-on-save files.
 
+Status tooltips show the current state and primary click action; context menus show mouse shortcuts beside their actions.
+
 ## Customization
 
 The status-bar item can be restyled from your `styles.css`, e.g.:
