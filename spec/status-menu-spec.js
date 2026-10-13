@@ -50,14 +50,6 @@ describe("latex-tools status menus", () => {
         .checked,
     ).toBe(true);
     expect(main.runCompilation).not.toHaveBeenCalled();
-    expect(
-      menu()
-        .filter((item) => item.mouseBindingLabel)
-        .map((item) => item.mouseBindingLabel),
-    ).toEqual(["LMB", "Alt+LMB", "MMB"]);
-    expect(
-      menu(counter).find((item) => item.command === "latex-tools:observed-files").mouseBindingLabel,
-    ).toBe("LMB");
     const options = tooltipCalls.calls.all().find((call) => call.args[0] === tile).args[1];
     expect(options.keyBindingCommand).toBe("latex-tools:compile");
     expect(options.keyBindingTarget()).toBe(editor.getElement());
