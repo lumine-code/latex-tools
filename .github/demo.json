@@ -1,0 +1,17 @@
+{
+  "title": "latex-tools",
+  "description": "Compile a LaTeX document and inspect the generated PDF beside its source.",
+  "recordedOn": "2026-10-13",
+  "sourceRevision": "270c325bef5a0226acec2a8e12c54480e9089074",
+  "mode": "normal",
+  "fontSettings": "default",
+  "themeSourceRevision": "6564a9e21899b5541e9c8f8006f9be6d6d72e6ad",
+  "images": [
+    {
+      "file": "demo.png",
+      "label": "Compile a LaTeX document and inspect the generated PDF beside its source.",
+      "width": 1250,
+      "height": 760
+    }
+  ]
+}

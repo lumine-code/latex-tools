@@ -14,6 +14,8 @@ Includes SyncTeX support, compile-on-save, integrated linting, and multiple buil
 - **Multiple builds**: compile multiple files simultaneously with independent build states.
 - **Magic comments**: per-file engine and root selection with `% !TEX program` and `% !TEX root`.
 
+![Compile a LaTeX document and inspect the generated PDF beside its source.](.github/demo.png)
+
 ## Installation
 
 To install `latex-tools` search for it in the Install pane of the Lumine settings, or run the command `lumine --install lumine-code/latex-tools`.
