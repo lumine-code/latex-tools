@@ -66,6 +66,46 @@ describe("latex-tools status menus", () => {
     main.observedFilesStatusView.setCount(2);
     expect(counterOptions.title()).toBe("2 observed files. Open the list.");
   });
+  it("shows the package's real editor-scoped shortcuts from the status menu", () => {
+    // Exercise the shipped keymap against its real editor scope without requiring a parser fixture.
+    editor.getElement().setAttribute("data-grammar", "latex");
+    const items = menu(tile.firstChild);
+    expect(items.find((item) => item.command === "latex-tools:compile").keyBindingLabel).toBe("F5");
+    expect(
+      items.find((item) => item.command === "latex-tools:toggle-compile-on-save").keyBindingLabel,
+    ).toBe(process.platform === "darwin" ? "\u2325F5" : "Alt+F5");
+    expect(
+      items.find((item) => item.command === "latex-tools:kill-and-clean").keyBindingLabel,
+    ).toBe(process.platform === "darwin" ? "\u2303F6" : "Ctrl+F6");
+    expect(
+      items.find((item) => item.command === "latex-tools:split-pdf-source").keyBindingLabel,
+    ).toBeUndefined();
+  });
+  it("keeps shortcut lookup in the tile's window and suppresses it for a PDF", async () => {
+    editor.getElement().setAttribute("data-grammar", "latex");
+    const extra = await lumine.workspace.openEditorWindow({ show: false });
+    const other = lumine.workspace.buildTextEditor();
+    extra.getEditorContainer().getActivePane().activateItem(other, { activatePane: true });
+    expect(lumine.workspace.getActiveTextEditor()).toBe(other);
+    expect(menu().find((item) => item.command === "latex-tools:compile").keyBindingLabel).toBe(
+      "F5",
+    );
+    const element = document.createElement("div");
+    const item = {
+      filePath: editor.getPath().replace(/\.tex$/, ".pdf"),
+      getTitle: () => "PDF",
+      getElement: () => element,
+    };
+    const container = lumine.workspace.getMainWindow().getEditorContainer();
+    container.getActivePane().activateItem(item);
+    const items = menu();
+    for (const command of ["compile", "toggle-compile-on-save", "kill-and-clean"])
+      expect(items.find((item) => item.command === "latex-tools:" + command).keyBindingLabel).toBe(
+        "",
+      );
+    expect(items.find((item) => item.command === "latex-tools:compile").enabled).toBe(true);
+    await container.getActivePane().destroyItem(item);
+  });
   it("resolves the primary keyboard hint from the tile's current editor", async () => {
     const options = tooltipCalls.calls.all().find((call) => call.args[0] === tile).args[1];
     const other = await lumine.workspace.open();
