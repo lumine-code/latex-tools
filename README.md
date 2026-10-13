@@ -28,7 +28,7 @@ This package requires `latexmk` and a LaTeX distribution to be installed on your
 
 If `latexmk` is not in your PATH, set the full path in the package settings under **Path to latexmk**. The `latex-tools:global-rc` command opens your global `latexmkrc` file to customize `latexmk` behavior (e.g. glossaries support).
 
-The status bar item shows the build state of the active file with a live timer (`TeX` idle, `TeX*` compile-on-save enabled; an eye icon with `TeX (N)` counts observed files). Left click compiles, alt-left click toggles compile-on-save, middle click splits PDF and TeX source, and right click interrupts the build and cleans auxiliary files. The item stays visible while viewing the output PDF, and opening a PDF during a build waits for completion before showing the updated file. Multi-file projects are supported: the build root is resolved from `% !TEX root` magic comments, `.fls` recorder files, or by scanning for documents that include the current file.
+The status bar item shows the build state of the active file with a live timer (`TeX` idle, `TeX*` compile-on-save enabled; an eye icon with `TeX (N)` counts observed files). Left click compiles, alt-left click toggles compile-on-save, middle click splits PDF and TeX source, and right click opens a menu containing all these actions and Stop and Clean. The observed-file counter opens the list on left click and a menu with list and stop-all actions on right click. The item stays visible while viewing the output PDF, and opening a PDF during a build waits for completion before showing the updated file. Multi-file projects are supported: the build root is resolved from `% !TEX root` magic comments, `.fls` recorder files, or by scanning for documents that include the current file.
 
 ## Commands
 
@@ -45,10 +45,11 @@ Commands available in `lumine-workspace`:
 - `latex-tools:clean-linter`: clear all linter messages,
 - `latex-tools:kill-and-clean`: interrupt the build and clean auxiliary files,
 - `latex-tools:open-pdf`: open the generated PDF in Lumine,
+- `latex-tools:split-pdf-source`: open the PDF or its source in an adjacent pane,
 - `latex-tools:synctex`: jump from source to corresponding PDF location (forward SyncTeX),
 - `latex-tools:open-pdf-external`: open the generated PDF in an external viewer.
 
-The build keybindings are scoped to LaTeX editors. Commands resolve the active saved LaTeX file when dispatched from the menu or command palette.
+Commands resolve the active saved LaTeX file when dispatched from the menu or command palette.
 
 Actions shown for `.latex-tools-observed-files-list`:
 

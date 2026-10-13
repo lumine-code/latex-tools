@@ -8,6 +8,7 @@
           "submenu": [
             { "label": "Compile", "command": "latex-tools:compile" },
             { "label": "Open PDF", "command": "latex-tools:open-pdf" },
+            { "label": "Split PDF and Source", "command": "latex-tools:split-pdf-source" },
             { "label": "Open PDF External", "command": "latex-tools:open-pdf-external" },
             { "label": "SyncTeX", "command": "latex-tools:synctex" },
             { "type": "separator" },
@@ -32,5 +33,48 @@
         }
       ]
     }
-  ]
+  ],
+  "context-menu": {
+    ".latex-tools-status": [
+      {
+        "type": "separator"
+      },
+      {
+        "label": "Compile",
+        "command": "latex-tools:compile"
+      },
+      {
+        "label": "Compile on Save",
+        "type": "checkbox",
+        "command": "latex-tools:toggle-compile-on-save"
+      },
+      {
+        "label": "Split PDF and Source",
+        "command": "latex-tools:split-pdf-source"
+      },
+      {
+        "label": "Stop and Clean",
+        "command": "latex-tools:kill-and-clean"
+      },
+      {
+        "type": "separator"
+      }
+    ],
+    ".latex-tools-observed-status": [
+      {
+        "type": "separator"
+      },
+      {
+        "label": "Observed Files",
+        "command": "latex-tools:observed-files"
+      },
+      {
+        "label": "Stop Observing All Files",
+        "command": "latex-tools:clear-all-observed-files"
+      },
+      {
+        "type": "separator"
+      }
+    ]
+  }
 }
