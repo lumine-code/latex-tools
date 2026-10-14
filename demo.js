@@ -8,7 +8,10 @@ module.exports = {
     const { lumine, state, fixture, open } = context;
     state.editor = await open("documents/latex-tools/report.tex");
     await lumine.project.setPaths([fixture("documents/latex-tools")]);
-    lumine.config.set("latex-tools.latexmkPath", process.env.LUMINE_DEMO_LATEXMK || "latexmk");
+    lumine.config.set(
+      "latex-tools.latexmkPath",
+      process.env.LUMINE_DEMO_LATEXMK || lumine.config.get("latex-tools.latexmkPath") || "latexmk",
+    );
   },
   scenes: [
     {
