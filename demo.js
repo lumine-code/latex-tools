@@ -29,6 +29,16 @@ module.exports = {
           );
         }
       },
+      async afterPointerMove({ lumine, waitFor }) {
+        for (const notice of lumine.notifications.getNotifications()) {
+          if (/^(Compiling report\.tex|report\.tex compiled successfully)/.test(notice.message))
+            notice.dismiss();
+        }
+        await waitFor(
+          () => !document.querySelector("lumine-notification"),
+          "compile notices to close",
+        );
+      },
       ready(context) {
         const { lumine } = context;
         return Boolean(
