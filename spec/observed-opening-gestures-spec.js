@@ -126,43 +126,22 @@ describe("latex-tools observed file opening gestures", () => {
     expect(chooser.pickers.get(host.window).context.path).toBe(selectedPath);
   });
 
-  it("forces pending Text Editor on Shift-click despite the ordinary preview setting", async () => {
-    lumine.config.set("core.allowPendingPaneItems", false);
-    const viewer = jasmine.createSpy("viewer");
-    leases.add(
-      lumine.workspace.addPathOpener({
-        id: "latex-tools:observed-viewer",
-        label: "Observed Viewer",
-        canOpen: (uri) => uri === selectedPath,
-        open: viewer,
-      }),
-    );
-    const result = await click({ shiftKey: true });
-    expect(result.status).toBe("success");
-    expect(result.command).toBe("latex-tools:open-pending");
-    const editor = lumine.workspace
-      .getTextEditors()
-      .find((item) => item.getPath() === selectedPath);
-    expect(editor.getText()).toBe("observed source\n");
-    expect(lumine.workspace.paneForItem(editor).getPendingItem()).toBe(editor);
-    expect(viewer).not.toHaveBeenCalled();
-  });
-
-  it("keeps ordinary clicks on the default opener and respects the preview setting", async () => {
-    lumine.config.set("core.allowPendingPaneItems", false);
-    const open = spyOn(lumine.workspace, "open").and.callThrough();
-    const result = await click();
-    expect(result.command).toBe("latex-tools:open-selected-file");
-    expect(open.calls.mostRecent().args[0]).toBe(selectedPath);
-    expect(open.calls.mostRecent().args[1].pending).toBe(false);
-    const editor = await open.calls.mostRecent().returnValue;
-    expect(editor.getText()).toBe("observed source\n");
-    expect(lumine.workspace.paneForItem(editor).getPendingItem()).toBeFalsy();
-  });
+  for (const pending of [false, true])
+    it("keeps ordinary clicks on the default opener with previews " + pending, async () => {
+      lumine.config.set("core.allowPendingPaneItems", pending);
+      const open = spyOn(lumine.workspace, "open").and.callThrough();
+      const result = await click();
+      expect(result.command).toBe("latex-tools:open-selected-file");
+      expect(open.calls.mostRecent().args[0]).toBe(selectedPath);
+      expect(open.calls.mostRecent().args[1].pending).toBe(pending);
+      const editor = await open.calls.mostRecent().returnValue;
+      expect(editor.getText()).toBe("observed source\n");
+      expect(lumine.workspace.paneForItem(editor).getPendingItem() === editor).toBe(pending);
+    });
 
   for (const [modifiers, method, command] of [
     [{ ctrlKey: true, altKey: true }, "openExternal", "open-external"],
-    [{ ctrlKey: true, shiftKey: true }, "showInFolder", "show-in-folder"],
+    [{ altKey: true, shiftKey: true }, "showInFolder", "show-in-folder"],
   ])
     it("runs " + command + " exactly once for the clicked source file", async () => {
       const action = spyOn(external, method).and.resolveTo("");
@@ -176,7 +155,7 @@ describe("latex-tools observed file opening gestures", () => {
 
   it("retains native error state and the picker when a system action fails", async () => {
     spyOn(external, "showInFolder").and.rejectWith(new Error("Reveal failed"));
-    const result = await click({ ctrlKey: true, shiftKey: true });
+    const result = await click({ altKey: true, shiftKey: true });
     expect(result.status).toBe("error");
     expect(model.getStatus()).toEqual({ type: "error", message: "Reveal failed" });
     expect(host.isVisible()).toBe(true);
@@ -201,9 +180,8 @@ describe("latex-tools observed file opening gestures", () => {
     const input = model.getQueryEditor().getElement();
     for (const [key, command] of [
       ["alt-enter", "open-with"],
-      ["shift-enter", "open-pending"],
       ["ctrl-alt-enter", "open-external"],
-      ["ctrl-shift-enter", "show-in-folder"],
+      ["alt-shift-enter", "show-in-folder"],
     ])
       expect(lumine.keymaps.findKeyBindings({ target: input, keystrokes: key })[0]?.command).toBe(
         "latex-tools:" + command,
@@ -214,6 +192,51 @@ describe("latex-tools observed file opening gestures", () => {
         actions
           .find((action) => action.command === "latex-tools:" + command)
           .keystrokes.some((key) => key.includes("f12")),
+      ).toBe(false);
+    }
+  });
+
+  for (const ctrlKey of [false, true])
+    it(
+      "uses " + (ctrlKey ? "Ctrl-Shift-click" : "Shift-click") + " only to select the clicked row",
+      async () => {
+        const open = spyOn(lumine.workspace, "open").and.callThrough();
+        const actions = jasmine.createSpy("finished action");
+        const lease = model.onDidFinishAction(actions);
+        const event = new MouseEvent("click", {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          shiftKey: true,
+          ctrlKey,
+        });
+        rowFor(selectedPath).querySelector(".primary-line").dispatchEvent(event);
+        await flushMicrotasks();
+        lease.dispose();
+        expect(model.getSelectedItem().filePath).toBe(selectedPath);
+        expect(event.defaultPrevented).toBe(true);
+        expect(actions).not.toHaveBeenCalled();
+        expect(host.isVisible()).toBe(true);
+        expect(lumine.application.openWindow).not.toHaveBeenCalled();
+        expect(chooser.pickers.size).toBe(0);
+        expect(open).not.toHaveBeenCalled();
+        expect(lumine.shell.openPath).not.toHaveBeenCalled();
+        expect(lumine.shell.showItemInFolder).not.toHaveBeenCalled();
+      },
+    );
+
+  it("exposes no Open Pending command or obsolete Enter alias", () => {
+    const input = model.getQueryEditor().getElement();
+    expect(
+      lumine.commands
+        .findCommands({ target: input })
+        .some(({ name }) => name === "latex-tools:open-pending"),
+    ).toBe(false);
+    for (const keystrokes of ["shift-enter", "ctrl-shift-enter"]) {
+      expect(
+        lumine.keymaps
+          .findKeyBindings({ target: input, keystrokes })
+          .some((binding) => binding.command.startsWith("latex-tools:")),
       ).toBe(false);
     }
   });

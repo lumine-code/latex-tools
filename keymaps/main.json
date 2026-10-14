@@ -19,8 +19,7 @@
   },
   ".latex-tools-observed-files-list lumine-text-editor[mini]": {
     "alt-enter": "latex-tools:open-with",
-    "shift-enter": "latex-tools:open-pending",
     "ctrl-alt-enter": "latex-tools:open-external",
-    "ctrl-shift-enter": "latex-tools:show-in-folder"
+    "alt-shift-enter": "latex-tools:show-in-folder"
   }
 }

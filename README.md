@@ -57,7 +57,6 @@ Actions shown for `.latex-tools-observed-files-list`:
 
 - `latex-tools:open-selected-file`: open the selected observed file,
 - `latex-tools:open-with`: choose how and where to open the selected observed file,
-- `latex-tools:open-pending`: open the observed file as a temporary text editor tab,
 - `latex-tools:open-external`: open the observed file in the configured external application,
 - `latex-tools:show-in-folder`: reveal the observed file in the system file manager,
 - `latex-tools:unobserve-selected-file`: stop observing the selected file,
