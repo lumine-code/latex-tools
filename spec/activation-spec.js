@@ -14,7 +14,10 @@ describe("latex-tools bootstrap", () => {
     const packagePath = path.join(__dirname, "..");
     const utilitiesLoaded = () =>
       Object.values(require.cache).some(
-        (entry) => entry.filename.startsWith(packagePath) && entry.filename.endsWith("utils.js"),
+        (entry) =>
+          typeof entry?.filename === "string" &&
+          entry.filename.startsWith(packagePath) &&
+          entry.filename.endsWith("utils.js"),
       );
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), "latex-bootstrap-"));
     try {
