@@ -25,6 +25,13 @@
               "command": "latex-tools:compile"
             },
             {
+              "label": "Toggle Compile on Save",
+              "command": "latex-tools:toggle-compile-on-save"
+            },
+            {
+              "type": "separator"
+            },
+            {
               "label": "Open PDF",
               "command": "latex-tools:open-pdf"
             },
@@ -44,21 +51,6 @@
               "type": "separator"
             },
             {
-              "label": "Clean",
-              "command": "latex-tools:clean"
-            },
-            {
-              "label": "Clean Linter",
-              "command": "latex-tools:clean-linter"
-            },
-            {
-              "label": "Kill and Clean",
-              "command": "latex-tools:kill-and-clean"
-            },
-            {
-              "type": "separator"
-            },
-            {
               "label": "Interrupt",
               "command": "latex-tools:interrupt"
             },
@@ -70,8 +62,19 @@
               "type": "separator"
             },
             {
-              "label": "Toggle Compile on Save",
-              "command": "latex-tools:toggle-compile-on-save"
+              "label": "Clean",
+              "command": "latex-tools:clean"
+            },
+            {
+              "label": "Stop and Clean",
+              "command": "latex-tools:kill-and-clean"
+            },
+            {
+              "label": "Clear Diagnostics",
+              "command": "latex-tools:clean-linter"
+            },
+            {
+              "type": "separator"
             },
             {
               "label": "Observed Files",
@@ -82,7 +85,7 @@
               "command": "latex-tools:clear-all-observed-files"
             },
             {
-              "label": "Global Latexmkrc",
+              "label": "Open Global Latexmkrc",
               "command": "latex-tools:global-rc"
             }
           ]
