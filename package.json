@@ -20,6 +20,10 @@
     "lumine": "^1.0.0"
   },
   "main": "./lib/main",
+  "specPackages": [
+    "open-with",
+    "open-external"
+  ],
   "files": [
     "docs",
     "keymaps",

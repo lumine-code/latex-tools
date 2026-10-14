@@ -54,6 +54,10 @@ describe("latex-tools item actions", () => {
 
     expect(actions.map((action) => action.command)).toEqual([
       "latex-tools:open-selected-file",
+      "latex-tools:open-with",
+      "latex-tools:open-pending",
+      "latex-tools:open-external",
+      "latex-tools:show-in-folder",
       "latex-tools:unobserve-selected-file",
       "latex-tools:clear-all-observed-files",
     ]);
