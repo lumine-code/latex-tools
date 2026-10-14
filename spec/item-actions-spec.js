@@ -17,6 +17,8 @@ describe("latex-tools item actions", () => {
   beforeEach(async () => {
     jasmine.attachToDOM(lumine.views.getView(lumine.workspace));
     const pkg = await lumine.packages.activatePackage("latex-tools");
+    expect(pkg.mainModule.observedFilesList).toBeNull();
+    await pkg.mainModule.showObservedFiles();
     list = pkg.mainModule.observedFilesList;
   });
 
