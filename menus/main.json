@@ -94,46 +94,56 @@
     }
   ],
   "context-menu": {
-    ".latex-tools-status": [
-      {
-        "type": "separator"
-      },
-      {
-        "label": "Compile",
-        "command": "latex-tools:compile"
-      },
-      {
-        "label": "Compile on Save",
-        "type": "checkbox",
-        "command": "latex-tools:toggle-compile-on-save"
-      },
-      {
-        "label": "Split PDF and Source",
-        "command": "latex-tools:split-pdf-source"
-      },
-      {
-        "label": "Stop and Clean",
-        "command": "latex-tools:kill-and-clean"
-      },
-      {
-        "type": "separator"
-      }
-    ],
-    ".latex-tools-observed-status": [
-      {
-        "type": "separator"
-      },
-      {
-        "label": "Observed Files",
-        "command": "latex-tools:observed-files"
-      },
-      {
-        "label": "Stop Observing All Files",
-        "command": "latex-tools:clear-all-observed-files"
-      },
-      {
-        "type": "separator"
-      }
-    ]
+    ".latex-tools-status": {
+      "commandTarget": "focus",
+      "items": [
+        {
+          "type": "separator"
+        },
+        {
+          "label": "Compile",
+          "command": "latex-tools:compile",
+          "commandDetail": { "fromStatusBar": true },
+          "keyBindingCommand": "latex-tools:compile"
+        },
+        {
+          "label": "Compile on Save",
+          "type": "checkbox",
+          "command": "latex-tools:toggle-compile-on-save"
+        },
+        {
+          "label": "Split PDF and Source",
+          "command": "latex-tools:split-pdf-source"
+        },
+        {
+          "label": "Stop and Clean",
+          "command": "latex-tools:kill-and-clean",
+          "commandDetail": { "fromStatusBar": true },
+          "keyBindingCommand": "latex-tools:kill-and-clean"
+        },
+        {
+          "type": "separator"
+        }
+      ]
+    },
+    ".latex-tools-observed-status": {
+      "commandTarget": "focus",
+      "items": [
+        {
+          "type": "separator"
+        },
+        {
+          "label": "Observed Files",
+          "command": "latex-tools:observed-files"
+        },
+        {
+          "label": "Stop Observing All Files",
+          "command": "latex-tools:clear-all-observed-files"
+        },
+        {
+          "type": "separator"
+        }
+      ]
+    }
   }
 }

@@ -11,6 +11,7 @@ describe("latex-tools status menus", () => {
     directory = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "latex-tools-status-")));
     await fs.writeFile(path.join(directory, "document.tex"), "source");
     editor = await lumine.workspace.open(path.join(directory, "document.tex"));
+    editor.getElement().focus();
     main = (await lumine.packages.activatePackage("latex-tools")).mainModule;
     main.ensureStatusBarViews();
     tile = main.statusBarView.getElement();
@@ -79,7 +80,7 @@ describe("latex-tools status menus", () => {
     ).toBe(process.platform === "darwin" ? "\u2303F6" : "Ctrl+F6");
     expect(
       items.find((item) => item.command === "latex-tools:split-pdf-source").keyBindingLabel,
-    ).toBe("");
+    ).toBeUndefined();
   });
   it("shows a user-assigned editor shortcut for splitting the document", async () => {
     editor.getElement().setAttribute("data-grammar", "latex");
@@ -96,6 +97,7 @@ describe("latex-tools status menus", () => {
       const row = () => menu().find((item) => item.command === "latex-tools:split-pdf-source");
       expect(row().keyBindingLabel).toBe("F9");
       const element = document.createElement("div");
+      element.tabIndex = -1;
       const pdf = {
         filePath: editor.getPath().replace(/\.tex$/, ".pdf"),
         getTitle: () => "PDF",
@@ -103,7 +105,8 @@ describe("latex-tools status menus", () => {
       };
       const pane = lumine.workspace.getMainWindow().getEditorContainer().getActivePane();
       pane.activateItem(pdf);
-      expect(row().keyBindingLabel).toBe("");
+      element.focus();
+      expect(row().keyBindingLabel).toBeUndefined();
       expect(row().enabled).toBe(true);
       await pane.destroyItem(pdf);
     } finally {
@@ -120,6 +123,7 @@ describe("latex-tools status menus", () => {
       "F5",
     );
     const element = document.createElement("div");
+    element.tabIndex = -1;
     const item = {
       filePath: editor.getPath().replace(/\.tex$/, ".pdf"),
       getTitle: () => "PDF",
@@ -127,13 +131,52 @@ describe("latex-tools status menus", () => {
     };
     const container = lumine.workspace.getMainWindow().getEditorContainer();
     container.getActivePane().activateItem(item);
+    element.focus();
     const items = menu();
     for (const command of ["compile", "toggle-compile-on-save", "kill-and-clean"])
       expect(items.find((item) => item.command === "latex-tools:" + command).keyBindingLabel).toBe(
-        "",
+        command === "toggle-compile-on-save" ? undefined : "",
       );
     expect(items.find((item) => item.command === "latex-tools:compile").enabled).toBe(true);
     await container.getActivePane().destroyItem(item);
+  });
+  it("compiles and cleans the PDF source through real status popups at the focused target", async () => {
+    const element = document.createElement("div");
+    element.tabIndex = -1;
+    const pdf = {
+      filePath: editor.getPath().replace(/\.tex$/, ".pdf"),
+      getTitle: () => "PDF",
+      getElement: () => element,
+    };
+    const pane = lumine.workspace.getMainWindow().getEditorContainer().getActivePane();
+    const compile = spyOn(main, "compileFromStatusBar").and.callThrough();
+    const clean = spyOn(main, "killAndCleanFromStatusBar");
+    pane.activateItem(pdf);
+    element.focus();
+    try {
+      for (const command of ["latex-tools:compile", "latex-tools:kill-and-clean"]) {
+        const popup = lumine.contextMenu.show(tile, menu());
+        try {
+          popup.rootList.items.find((item) => item.template.command === command).activate();
+          await conditionPromise(() =>
+            command === "latex-tools:compile"
+              ? main.runCompilation.calls.count() > 0
+              : clean.calls.count() > 0,
+          );
+        } finally {
+          popup.close();
+        }
+      }
+      expect(main.runCompilation).toHaveBeenCalledOnceWith(editor.getPath());
+      for (const handler of [compile, clean]) {
+        const event = handler.calls.mostRecent().args[0];
+        expect(event.target).toBe(element);
+        expect(event.detail.fromStatusBar).toBe(true);
+        expect(main.statusBarDocument(event).filePath).toBe(editor.getPath());
+      }
+    } finally {
+      await pane.destroyItem(pdf, true);
+    }
   });
   it("resolves the primary keyboard hint from the tile's current editor", async () => {
     const options = tooltipCalls.calls.all().find((call) => call.args[0] === tile).args[1];
