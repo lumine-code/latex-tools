@@ -30,7 +30,7 @@ describe("latex-tools observed file opening gestures", () => {
       outputDisplayPath: "output.pdf",
     }));
     spyOn(list, "buildItems").and.callFake(() => items);
-    chooser = (await lumine.packages.activatePackage("open-with")).mainModule;
+    chooser = (await lumine.packages.activatePackage("launcher")).mainModule;
     external = (await lumine.packages.activatePackage("open-external")).mainModule;
     spyOn(lumine.shell, "openPath").and.resolveTo("");
     spyOn(lumine.shell, "showItemInFolder").and.resolveTo();
@@ -45,7 +45,7 @@ describe("latex-tools observed file opening gestures", () => {
   afterEach(async () => {
     leases.dispose();
     await list.destroy();
-    await lumine.packages.deactivatePackage("open-with");
+    await lumine.packages.deactivatePackage("launcher");
     await lumine.packages.deactivatePackage("open-external");
     await lumine.packages.deactivatePackage("latex-tools");
     for (const pane of lumine.workspace.getPanes()) {
@@ -92,17 +92,17 @@ describe("latex-tools observed file opening gestures", () => {
     return result;
   }
 
-  it("pushes Open With for the clicked source file instead of its compile root", async () => {
+  it("pushes Launcher for the clicked source file instead of its compile root", async () => {
     const result = await click({ altKey: true });
     expect(result.status).toBe("success");
-    expect(result.command).toBe("latex-tools:open-with");
+    expect(result.command).toBe("latex-tools:open");
     const child = chooser.pickers.get(lumine.workspace.getMainWindow());
     expect(child.context.path).toBe(selectedPath);
     expect(child.context.path).not.toBe(rootPath);
     expect(child.context.window).toBe(host.window);
     expect(child.host.isVisible()).toBe(true);
     expect(host.isVisible()).toBe(false);
-    expect(lumine.workspace.getModalTrail()).toEqual(["Observed Files", "Open With"]);
+    expect(lumine.workspace.getModalTrail()).toEqual(["Observed Files", "Open"]);
     expect(lumine.workspace.popModal()).toBe(true);
     await child.host.destroy();
     expect(host.isVisible()).toBe(true);
@@ -122,7 +122,7 @@ describe("latex-tools observed file opening gestures", () => {
     Object.defineProperty(event, "target", { value: model.getQueryEditor().getElement() });
     lumine.keymaps.handleKeyboardEvent(event);
     const result = await finished;
-    expect(result.command).toBe("latex-tools:open-with");
+    expect(result.command).toBe("latex-tools:open");
     expect(chooser.pickers.get(host.window).context.path).toBe(selectedPath);
   });
 
@@ -179,7 +179,7 @@ describe("latex-tools observed file opening gestures", () => {
   it("binds the standard local Enter variants and advertises no F12 aliases", () => {
     const input = model.getQueryEditor().getElement();
     for (const [key, command] of [
-      ["alt-enter", "open-with"],
+      ["alt-enter", "open"],
       ["ctrl-alt-enter", "open-external"],
       ["alt-shift-enter", "show-in-folder"],
     ])

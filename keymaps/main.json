@@ -16,7 +16,7 @@
   },
   ".latex-tools-observed-files-list lumine-text-editor[mini]": {
     "cmdorctrl-d": "latex-tools:unobserve-selected-file",
-    "alt-enter": "latex-tools:open-with",
+    "alt-enter": "latex-tools:open",
     "ctrl-alt-enter": "latex-tools:open-external",
     "alt-shift-enter": "latex-tools:show-in-folder"
   }

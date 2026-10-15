@@ -21,7 +21,7 @@
   },
   "main": "./lib/main",
   "specPackages": [
-    "open-with",
+    "launcher",
     "open-external"
   ],
   "files": [

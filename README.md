@@ -56,7 +56,7 @@ Commands resolve the active saved LaTeX file when dispatched from the menu or co
 Actions shown for `.latex-tools-observed-files-list`:
 
 - `latex-tools:open-selected-file`: open the selected observed file,
-- `latex-tools:open-with`: choose how and where to open the selected observed file,
+- `latex-tools:open`: choose how and where to open the selected observed file,
 - `latex-tools:open-external`: open the observed file in the configured external application,
 - `latex-tools:show-in-folder`: reveal the observed file in the system file manager,
 - `latex-tools:unobserve-selected-file`: stop observing the selected file,
