@@ -211,6 +211,7 @@ describe("latex-tools", () => {
 
       let finishRootSave;
       const childEditor = {
+        isDestroyed: () => false,
         getPath: () => childFile,
         getFileState: () => "removed",
         save: jasmine.createSpy("save-child").and.callFake(async () => {
@@ -218,6 +219,7 @@ describe("latex-tools", () => {
         }),
       };
       const rootEditor = {
+        isDestroyed: () => false,
         getPath: () => rootFile,
         getFileState: () => "modified",
         save: jasmine.createSpy("save-root").and.callFake(

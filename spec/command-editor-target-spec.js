@@ -20,6 +20,7 @@ describe("LaTeX Tools document command targets", () => {
     second = await lumine.workspace.open(path.join(directory, "second.tex"));
     firstPane.activate();
     main = (await lumine.packages.activatePackage("latex-tools")).mainModule;
+    main.consumeOpenExternal({ openExternal: async () => {} });
     spyOn(main, "runCompilation").and.stub();
     spyOn(main, "cleanFile").and.resolveTo();
     spyOn(main, "killProcess").and.stub();
