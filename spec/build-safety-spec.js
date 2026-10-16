@@ -4,7 +4,7 @@ const path = require("node:path");
 const cp = require("child_process");
 
 describe("LaTeX build data and process ownership", () => {
-  let main, directory, nodePath, children, nativeSpawn;
+  let main, directory, nodePath, children, closedChildren, nativeSpawn;
   const exit = (child) =>
     child.exitCode !== null || child.signalCode !== null
       ? Promise.resolve()
@@ -22,6 +22,7 @@ describe("LaTeX build data and process ownership", () => {
       await lumine.packages.unloadPackage("latex-tools");
     directory = fs.mkdtempSync(path.join(os.tmpdir(), "latex-owned-build-"));
     children = [];
+    closedChildren = new Map();
     nodePath = cp
       .execFileSync("node", ["-p", "process.execPath"], {
         encoding: "utf8",
@@ -38,6 +39,7 @@ describe("LaTeX build data and process ownership", () => {
       if (command !== "owned-audit-compiler") throw new Error("Unexpected compiler command");
       const child = nativeSpawn(nodePath, [helper], { windowsHide: true });
       children.push(child);
+      closedChildren.set(child, new Promise((resolve) => child.once("close", resolve)));
       return child;
     });
     main = (await lumine.packages.activatePackage("latex-tools")).mainModule;
@@ -52,15 +54,17 @@ describe("LaTeX build data and process ownership", () => {
   afterEach(async () => {
     await lumine.packages.deactivatePackage("latex-tools");
     for (const child of children) {
-      child.kill();
-      await exit(child);
+      if (child.exitCode === null && child.signalCode === null) child.kill();
+      await closedChildren.get(child);
     }
     const owned = fs.realpathSync(directory);
     const temporary = fs.realpathSync(os.tmpdir());
     const relative = path.relative(temporary, owned);
     if (!relative || relative.startsWith("..") || path.isAbsolute(relative))
       throw new Error("Unsafe owned scratch cleanup");
-    fs.rmSync(owned, { recursive: true, force: true });
+    // Windows may briefly retain the copied SyncTeX executable after its
+    // synchronous child exits. Retry only the checked private fixture root.
+    fs.rmSync(owned, { recursive: true, force: true, maxRetries: 10, retryDelay: 50 });
   });
 
   it("preserves source and PDF when simple clean extensions name them", () => {
