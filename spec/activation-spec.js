@@ -19,6 +19,10 @@ describe("latex-tools bootstrap", () => {
           entry.filename.startsWith(packagePath) &&
           entry.filename.endsWith("utils.js"),
       );
+    const operationsLoaded = () =>
+      Object.values(require.cache).some(
+        (entry) => entry?.filename === path.join(packagePath, "lib/operations.js"),
+      );
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), "latex-bootstrap-"));
     try {
       if (lumine.packages.isPackageLoaded("latex-tools")) {
@@ -30,8 +34,13 @@ describe("latex-tools bootstrap", () => {
       await lumine.packages.unloadPackage("latex-tools");
       const main = (await lumine.packages.startPackage(packagePath)).mainModule;
       expect(typeof main.provideLatexTools().compile).toBe("function");
+      expect(operationsLoaded()).toBe(false);
+      expect(
+        lumine.commands.canDispatch(lumine.workspace.getElement(), "latex-tools:global-rc"),
+      ).toBe(true);
       expect(main.getRootFilePath(path.join(directory, "notes.txt"))).toBeNull();
       expect(utilitiesLoaded()).toBe(false);
+      expect(operationsLoaded()).toBe(false);
 
       const root = path.join(directory, "main.tex");
       const child = path.join(directory, "child.tex");
@@ -39,6 +48,7 @@ describe("latex-tools bootstrap", () => {
       fs.writeFileSync(child, "% !TEX root = main.tex\nText.");
       expect(main.getRootFilePath(child)).toBe(root);
       expect(utilitiesLoaded()).toBe(true);
+      expect(operationsLoaded()).toBe(true);
     } finally {
       if (lumine.packages.isPackageLoaded("latex-tools")) {
         await lumine.packages.unloadPackage("latex-tools");
