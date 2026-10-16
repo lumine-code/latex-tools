@@ -34,6 +34,25 @@ describe("latex-tools status menus", () => {
   function menu(element = tile) {
     return lumine.contextMenu.templateForElement(element);
   }
+  it("computes availability and observation from the saved target's pane", async () => {
+    const other = await lumine.workspace.open(undefined, { split: "right" });
+    other.getBuffer().setPath(path.join(directory, "other.tex"));
+    spyOn(main, "isCompileOnSaveEnabledForFile").and.callFake((file) => file === editor.getPath());
+    const rowFor = (focusTarget) =>
+      lumine.contextMenu
+        .templateForEvent({ target: tile }, { focusTarget })
+        .find((item) => item.command === "latex-tools:toggle-compile-on-save");
+    try {
+      expect(lumine.workspace.getActiveTextEditor()).toBe(other);
+      expect(rowFor(editor.getElement()).checked).toBe(true);
+      expect(rowFor(other.getElement()).checked).toBe(false);
+      other.getBuffer().setPath(path.join(directory, "other.txt"));
+      expect(rowFor(editor.getElement()).enabled).toBe(true);
+      expect(rowFor(other.getElement()).enabled).toBe(false);
+    } finally {
+      other.destroy();
+    }
+  });
   it("lists every mouse action and reads observation state when opened", () => {
     const before = menu();
     expect(before.filter((item) => item.command).map((item) => item.command)).toEqual([
