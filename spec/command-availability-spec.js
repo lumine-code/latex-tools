@@ -81,4 +81,54 @@ describe("latex-tools command availability", () => {
     expect(root).not.toHaveBeenCalled();
     expect(build).not.toHaveBeenCalled();
   });
+
+  it("cancels compilation when the root changes path during its save", async () => {
+    editor = await lumine.workspace.open();
+    editor.getBuffer().setPath(path.join(process.cwd(), "child.tex"));
+    const root = await lumine.workspace.open();
+    const rootPath = path.join(process.cwd(), "root.tex");
+    root.getBuffer().setPath(rootPath);
+    root.setText("modified root");
+    let finish;
+    const saved = new Promise((resolve) => {
+      finish = resolve;
+    });
+    spyOn(root, "save").and.returnValue(saved);
+    spyOn(main, "getRootFilePath").and.returnValue(rootPath);
+    spyOn(main, "checkBuildStatus").and.returnValue(false);
+    const build = spyOn(main, "runCompilation");
+    try {
+      const pending = main.compile({ target: editor.getElement() });
+      expect(root.save).toHaveBeenCalled();
+      root.getBuffer().setPath(path.join(process.cwd(), "renamed.tex"));
+      finish();
+      await pending;
+      expect(build).not.toHaveBeenCalled();
+    } finally {
+      root.destroy();
+    }
+  });
+
+  it("starts only one status build after concurrent source saves finish", async () => {
+    editor = await lumine.workspace.open();
+    const filePath = path.join(process.cwd(), "status.tex");
+    editor.getBuffer().setPath(filePath);
+    editor.setText("modified source");
+    let finish;
+    const saved = new Promise((resolve) => {
+      finish = resolve;
+    });
+    spyOn(editor, "save").and.returnValue(saved);
+    spyOn(main, "statusBarDocument").and.returnValue({ filePath });
+    spyOn(main, "getRootFilePath").and.returnValue(filePath);
+    spyOn(main, "checkBuildStatus").and.callFake(() => main.buildProcesses.has(filePath));
+    const build = spyOn(main, "runCompilation").and.callFake(() =>
+      main.buildProcesses.set(filePath, {}),
+    );
+    const pending = [main.compileFromStatusBar(), main.compileFromStatusBar()];
+    expect(build).not.toHaveBeenCalled();
+    finish();
+    await Promise.all(pending);
+    expect(build).toHaveBeenCalledOnceWith(filePath);
+  });
 });
