@@ -61,6 +61,7 @@ describe("latex-tools item actions", () => {
       "latex-tools:show-in-folder",
       "latex-tools:unobserve-selected-file",
       "latex-tools:clear-all-observed-files",
+      "select-list:toggle-keep-open",
     ]);
 
     const open = byCommand.get("latex-tools:open-selected-file");
@@ -94,17 +95,38 @@ describe("latex-tools item actions", () => {
     expect(list.selectList.getItemId(item)).toBe(item.filePath);
   });
 
-  it("keeps only Clear All without a selection and hides it when the source is empty", () => {
+  it("keeps list actions without a selection and hides Clear All when the source is empty", () => {
     setItems([item]);
     list.selectList.setItems([]);
 
     expect(list.selectList.getAvailableActions().map((action) => action.command)).toEqual([
       "latex-tools:clear-all-observed-files",
+      "select-list:toggle-keep-open",
     ]);
 
     setItems([]);
-    expect(list.selectList.getAvailableActions()).toEqual([]);
+    expect(list.selectList.getAvailableActions().map(({ command }) => command)).toEqual([
+      "select-list:toggle-keep-open",
+    ]);
   });
+
+  for (const keepOpen of [false, true]) {
+    it(`removes the last observed file with keep-open mode ${keepOpen}`, async () => {
+      let remaining = [item];
+      spyOn(list, "buildItems").and.callFake(() => remaining);
+      const unobserve = spyOn(list.mainModule, "setCompileOnSaveForFile").and.callFake(() => {
+        remaining = [];
+      });
+      await list.selectList.reload();
+      await list.selectList.setKeepOpen(keepOpen);
+
+      await list.selectList.runAction("latex-tools:unobserve-selected-file");
+
+      expect(unobserve).toHaveBeenCalledOnceWith(item.filePath, false);
+      expect(list.selectList.getItems()).toEqual([]);
+      expect(list.selectListHost.isVisible()).toBe(keepOpen);
+    });
+  }
 
   it("shows the actions as a flow step and runs one against the master list", async () => {
     await list.show();
