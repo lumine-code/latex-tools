@@ -30,7 +30,8 @@
     "lib",
     "menus",
     "spec",
-    "styles"
+    "styles",
+    "THIRD_PARTY_NOTICES"
   ],
   "scripts": {
     "test": "lumine --test spec",
