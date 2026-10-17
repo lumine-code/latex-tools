@@ -19,18 +19,24 @@ module.exports = {
       file: "demo.png",
       caption: "Compile a LaTeX document and inspect the generated PDF beside its source.",
       timeout: 60000,
-      async run(context) {
-        const { lumine, state } = context;
-        {
-          await lumine.packages.getActivePackage("latex-tools").mainModule.compile();
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-        }
-        {
-          lumine.commands.dispatch(
-            lumine.views.getView(state.editor),
-            "latex-tools:split-pdf-source",
-          );
-        }
+      async run({ lumine, state, waitFor }) {
+        const tools = lumine.packages.getActivePackage("latex-tools").mainModule;
+        const source = state.editor.getPath();
+        state.pdfPath = source.replace(/\.tex$/, ".pdf");
+        await tools.compile();
+        await waitFor(
+          () => {
+            const build = tools.getBuildState(source);
+            if (build.status === "error") throw new Error("The LaTeX demo compilation failed");
+            return build.status === "success" && require("node:fs").existsSync(state.pdfPath);
+          },
+          "successful LaTeX compilation and PDF output",
+          60000,
+        );
+        lumine.commands.dispatch(
+          lumine.views.getView(state.editor),
+          "latex-tools:split-pdf-source",
+        );
       },
       async afterPointerMove({ lumine, waitFor }) {
         for (const notice of lumine.notifications.getNotifications()) {
@@ -42,14 +48,33 @@ module.exports = {
           "compile notices to close",
         );
       },
-      ready(context) {
-        const { lumine } = context;
+      ready({ lumine, state, project, profile }) {
+        const viewer = lumine.workspace
+          .getPaneItems()
+          .find((item) => item.getPath?.() === state.pdfPath);
+        const frame = viewer?.frame;
+        const app = frame?.contentWindow?.PDFViewerApplication;
+        const pdfText = frame?.contentDocument?.body?.innerText || "";
+        const visibleText = `${document.body.innerText}\n${pdfText}`;
+        const normalized = visibleText.replace(/\\/g, "/").toLowerCase();
+        const hasLocalPath =
+          /[a-z]:[\\/]/i.test(visibleText) ||
+          [project, profile].some((directory) =>
+            normalized.includes(directory.replace(/\\/g, "/").toLowerCase()),
+          );
         return Boolean(
           lumine.workspace.getCenter().getPanes().length === 2 &&
-          lumine.workspace.getPaneItems().some((i) => i.getPath?.()?.endsWith(".pdf")),
+          app?.pdfDocument?.numPages === 1 &&
+          app.pdfViewer.getPageView(0)?.renderingState === 3 &&
+          pdfText.includes("Signal Lab") &&
+          !document.querySelector("lumine-notification") &&
+          !hasLocalPath,
         );
       },
     },
   ],
+  privacyText() {
+    return document.querySelector(".pdf-view-frame")?.contentDocument?.body?.innerText || "";
+  },
   async cleanup() {},
 };
