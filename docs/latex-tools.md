@@ -92,7 +92,7 @@ module.exports = {
 
 `onDidFailBuild` and `onDidFinishBuild` are mutually exclusive per build; `onDidChangeBuildStatus` fires for both plus the transitions in between, so drive a status indicator from that one and act on the specific two.
 
-Diagnostics reach the linter panel on their own — `latex-tools` registers an indie linter itself — so a consumer does not need to republish `getMessages`. Read them only if you are showing something the panel does not.
+Diagnostics reach the diagnostics panel on their own — `latex-tools` registers an indie linter itself — so a consumer does not need to republish `getMessages`. Read them only if you are showing something the panel does not.
 
 `compile` on a file already building is not queued; check `isBuilding(filePath)` first if that matters.
 
