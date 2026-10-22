@@ -1,9 +1,9 @@
 {
   "title": "latex-tools",
   "description": "Compile a LaTeX document and inspect the generated PDF beside its source.",
-  "recordedOn": "2026-10-22",
-  "sourceRevision": "7c8b18a576663429ca432e2a88fafa106acb4b9d",
-  "themeSourceRevision": "c087b608c20a2126307e99b38d40b3ca9c3ebbf6",
+  "recordedOn": "2026-10-17",
+  "sourceRevision": "3af8990b1e90fe0aa719f9e53d11cfb2a14c362a",
+  "themeSourceRevision": "80e8864a2e9a891ef1f911d78ab8f03fb3911f58",
   "mode": "normal",
   "fontSettings": "default",
   "scenario": "demo.js",
@@ -24,17 +24,17 @@
   "privacy": { "version": 1, "location": "neutral", "textChecked": true },
   "sources": {
     "editor": {
-      "revision": "eda1f70145b8fed1076f36b05b72d89b7641dab2",
+      "revision": "200598247a0ae40f5e0bf1998b44f7fe77bc0aa7",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     "package": {
-      "revision": "7c8b18a576663429ca432e2a88fafa106acb4b9d",
+      "revision": "3af8990b1e90fe0aa719f9e53d11cfb2a14c362a",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     "latex-tools": {
-      "revision": "7c8b18a576663429ca432e2a88fafa106acb4b9d",
+      "revision": "3af8990b1e90fe0aa719f9e53d11cfb2a14c362a",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
@@ -44,12 +44,12 @@
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     "one-theme": {
-      "revision": "c087b608c20a2126307e99b38d40b3ca9c3ebbf6",
+      "revision": "80e8864a2e9a891ef1f911d78ab8f03fb3911f58",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     "pdf-view": {
-      "revision": "675c53ab85b68d025766902dc1f07f61bd19be99",
+      "revision": "754d672f721b0f81b28c73f00699d0e252b51f98",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     }
@@ -66,7 +66,7 @@
       "label": "Compile a LaTeX document and inspect the generated PDF beside its source.",
       "width": 1250,
       "height": 760,
-      "sha256": "b6a9d92e2e1856422b91ec0602e99974189f68e8546819f00192aa011f45e83f"
+      "sha256": "88a3e2df95ae4eb983779e1200feeff92c98a384f784c88fe2fd783f697f135d"
     }
   ]
 }
