@@ -44,6 +44,13 @@
   &.status-error {
     color: var(--text-color-error);
   }
+
+  &.status-success,
+  &.status-error {
+    .latex-tools-status-timer {
+      color: inherit;
+    }
+  }
 }
 
 .latex-tools-observed-status {
