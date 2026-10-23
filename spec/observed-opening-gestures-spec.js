@@ -71,6 +71,45 @@ describe("latex-tools observed file opening gestures", () => {
     return model.getElement().querySelectorAll('[role="option"]')[index];
   }
 
+  it("restores selection within the filtered results after an item update", async () => {
+    await model.setQuery("first");
+    await expectAsync(list.update(1)).toBeResolved();
+    expect(model.getMatchCount()).toBe(1);
+    expect(model.getSelectedItem()).toBe(items[0]);
+  });
+
+  it("does not restore an index when the active filter has no results", async () => {
+    await model.setQuery("no-such-observed-file-987654321");
+    await expectAsync(list.update(0)).toBeResolved();
+    expect(model.getSelectedItem()).toBeNull();
+  });
+
+  it("preserves a newer query while an observed source update settles", async () => {
+    await model.setQuery("first");
+    const updating = list.update(1);
+    await model.clearQuery();
+    await updating;
+    expect(model.getQuery()).toBe("");
+    expect(model.getSelectedItem()).toBe(items[0]);
+  });
+
+  it("owns failures from a refresh started by a file observer", async () => {
+    await model.setQuery("first");
+    spyOn(model, "matchInWorker").and.rejectWith(new Error("worker unavailable"));
+    const unhandled = [];
+    const onRejection = (event) => unhandled.push(event.reason?.message);
+    window.addEventListener("unhandledrejection", onRejection);
+    try {
+      void list.update();
+      await conditionPromise(() => model.getStatus()?.message === "worker unavailable");
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(unhandled).toEqual([]);
+      await expectAsync(list.update()).toBeRejectedWithError("worker unavailable");
+    } finally {
+      window.removeEventListener("unhandledrejection", onRejection);
+    }
+  });
+
   function nextAction() {
     return new Promise((resolve) => {
       const lease = model.onDidFinishAction((result) => {
