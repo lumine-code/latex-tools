@@ -32,6 +32,8 @@ If `latexmk` is not in your PATH, set the full path in the package settings unde
 
 The status bar item shows the build state of the active file with a live timer (`TeX` idle, `TeX*` compile-on-save enabled; an eye icon with `TeX (N)` counts observed files). Left click compiles, alt-left click toggles compile-on-save, middle click splits PDF and TeX source, and right click opens a menu containing all these actions and Stop and Clean. The observed-file counter opens the list on left click and a menu with list and stop-all actions on right click. The item stays visible while viewing the output PDF, and opening a PDF during a build waits for completion before showing the updated file. Multi-file projects are supported: the build root is resolved from `% !TEX root` magic comments, `.fls` recorder files, or by scanning for documents that include the current file.
 
+Automatic compilation pauses while an open source document uses the None grammar. Selecting None cancels its queued automatic build and interrupts its running build; choosing a grammar lets later file changes compile again. The file remains on the observed-files list, and explicit build and file operations remain available.
+
 ## Commands
 
 Commands available in `lumine-workspace`:

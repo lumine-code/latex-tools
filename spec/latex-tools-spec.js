@@ -13,6 +13,8 @@ describe("latex-tools", () => {
   }
 
   beforeEach(async () => {
+    const language = await lumine.packages.activatePackage("language-text");
+    await language.resourceLoadPromise;
     tempDirs = [];
     workspaceElement = lumine.views.getView(lumine.workspace);
     jasmine.attachToDOM(workspaceElement);

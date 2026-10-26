@@ -44,6 +44,7 @@ describe("LaTeX build data and process ownership", () => {
     });
     main = (await lumine.packages.activatePackage("latex-tools")).mainModule;
     spyOn(main, "killProcess").and.callFake((child) => {
+      if (!child) return;
       if (!children.includes(child)) throw new Error("Foreign process");
       child.kill();
     });

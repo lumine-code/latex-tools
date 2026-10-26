@@ -7,6 +7,8 @@ describe("latex-tools status visibility", () => {
   let main, directory, host, registrations;
 
   beforeEach(async () => {
+    const language = await lumine.packages.activatePackage("language-text");
+    await language.resourceLoadPromise;
     jasmine.attachToDOM(lumine.workspace.getElement());
     if (lumine.packages.isPackageLoaded("latex-tools")) {
       await lumine.packages.unloadPackage("latex-tools");
