@@ -100,4 +100,21 @@ describe("latex-tools automatic builds without a grammar", () => {
     main.buildService.isBuilding(editor.getPath());
     expect(discover).not.toHaveBeenCalled();
   });
+
+  it("does not automatically compile a child whose root uses None", async () => {
+    const rootPath = path.join(directory, "root.tex");
+    fs.writeFileSync(rootPath, "root source\n");
+    const rootEditor = await lumine.workspace.open(rootPath);
+    try {
+      rootEditor.setGrammar(lumine.grammars.nullGrammar);
+      spyOn(main, "getRootFilePath").and.returnValue(rootPath);
+      const compile = spyOn(main, "compileFilePath");
+      emitter.emit("change", []);
+      advanceClock(200);
+      expect(compile).not.toHaveBeenCalled();
+    } finally {
+      rootEditor.destroy();
+      fs.unlinkSync(rootPath);
+    }
+  });
 });
