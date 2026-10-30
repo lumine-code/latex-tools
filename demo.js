@@ -52,9 +52,8 @@ module.exports = {
         const viewer = lumine.workspace
           .getPaneItems()
           .find((item) => item.getPath?.() === state.pdfPath);
-        const frame = viewer?.frame;
-        const app = frame?.contentWindow?.PDFViewerApplication;
-        const pdfText = frame?.contentDocument?.body?.innerText || "";
+        const page = viewer?.pdfViewer?.getPageView(0);
+        const pdfText = (viewer && lumine.views.getView(viewer)?.innerText) || "";
         const visibleText = `${document.body.innerText}\n${pdfText}`;
         const normalized = visibleText.replace(/\\/g, "/").toLowerCase();
         const hasLocalPath =
@@ -64,8 +63,9 @@ module.exports = {
           );
         return Boolean(
           lumine.workspace.getCenter().getPanes().length === 2 &&
-          app?.pdfDocument?.numPages === 1 &&
-          app.pdfViewer.getPageView(0)?.renderingState === 3 &&
+          viewer?.pdfDocument?.numPages === 1 &&
+          !viewer.loading &&
+          page?.renderingState === 3 &&
           pdfText.includes("Signal Lab") &&
           !document.querySelector("lumine-notification") &&
           !hasLocalPath,
@@ -73,8 +73,11 @@ module.exports = {
       },
     },
   ],
-  privacyText() {
-    return document.querySelector(".pdf-view-frame")?.contentDocument?.body?.innerText || "";
+  privacyText({ lumine, state }) {
+    const viewer = lumine.workspace
+      .getPaneItems()
+      .find((item) => item.getPath?.() === state.pdfPath);
+    return (viewer && lumine.views.getView(viewer)?.innerText) || "";
   },
   async cleanup() {},
 };
