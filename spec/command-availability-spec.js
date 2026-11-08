@@ -1,15 +1,17 @@
 const path = require("node:path");
 describe("latex-tools command availability", () => {
-  let main, editor;
+  let main, editor, active;
   const can = (name) =>
     lumine.commands.canDispatch(lumine.workspace.getElement(), "latex-tools:" + name);
   beforeEach(async () => {
     jasmine.attachToDOM(lumine.workspace.getElement());
+    await lumine.packages.activatePackage("tasks");
     main = (await lumine.packages.activatePackage("latex-tools")).mainModule;
+    active = new Set();
+    spyOn(main, "checkBuildStatus").and.callFake((file) => active.has(file));
+    spyOn(main, "getActiveBuilds").and.callFake(() => [...active]);
   });
   afterEach(async () => {
-    main.buildProcesses.clear();
-    main.compileOnSaveFiles.clear();
     editor?.destroy();
     await lumine.packages.deactivatePackage("latex-tools");
   });
@@ -39,7 +41,7 @@ describe("latex-tools command availability", () => {
     expect(can("interrupt")).toBeFalse();
     const buildPath = path.join(process.cwd(), "root.tex");
     main.commandRoots.set(source, buildPath);
-    main.buildProcesses.set(buildPath, {});
+    active.add(buildPath);
     expect(can("compile")).toBeFalse();
     expect(can("interrupt")).toBeTrue();
     expect(can("interrupt-all")).toBeTrue();
@@ -47,7 +49,7 @@ describe("latex-tools command availability", () => {
     expect(expensive).not.toHaveBeenCalled();
     expect(text).not.toHaveBeenCalled();
     expect(main.observedFilesList).toBeNull();
-    main.compileOnSaveFiles.set(source, {});
+    spyOn(main, "getCompileOnSaveFiles").and.returnValue([source]);
     expect(can("clear-all-observed-files")).toBeTrue();
     editor.getBuffer().setPath(path.join(process.cwd(), "unrelated.txt"));
     expect(can("compile")).toBeFalse();
@@ -95,7 +97,7 @@ describe("latex-tools command availability", () => {
     });
     spyOn(root, "save").and.returnValue(saved);
     spyOn(main, "getRootFilePath").and.returnValue(rootPath);
-    spyOn(main, "checkBuildStatus").and.returnValue(false);
+    main.checkBuildStatus.and.returnValue(false);
     const build = spyOn(main, "runCompilation");
     try {
       const pending = main.compile({ target: editor.getElement() });
@@ -109,7 +111,7 @@ describe("latex-tools command availability", () => {
     }
   });
 
-  it("starts only one status build after concurrent source saves finish", async () => {
+  it("starts only one document build after concurrent source saves finish", async () => {
     editor = await lumine.workspace.open();
     const filePath = path.join(process.cwd(), "status.tex");
     editor.getBuffer().setPath(filePath);
@@ -119,13 +121,11 @@ describe("latex-tools command availability", () => {
       finish = resolve;
     });
     spyOn(editor, "save").and.returnValue(saved);
-    spyOn(main, "statusBarDocument").and.returnValue({ filePath });
+    spyOn(main, "commandDocument").and.returnValue({ filePath });
     spyOn(main, "getRootFilePath").and.returnValue(filePath);
-    spyOn(main, "checkBuildStatus").and.callFake(() => main.buildProcesses.has(filePath));
-    const build = spyOn(main, "runCompilation").and.callFake(() =>
-      main.buildProcesses.set(filePath, {}),
-    );
-    const pending = [main.compileFromStatusBar(), main.compileFromStatusBar()];
+    main.checkBuildStatus.and.callFake(() => active.has(filePath));
+    const build = spyOn(main, "runCompilation").and.callFake(() => active.add(filePath));
+    const pending = [main.compile(), main.compile()];
     expect(build).not.toHaveBeenCalled();
     finish();
     await Promise.all(pending);

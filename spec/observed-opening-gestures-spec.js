@@ -18,6 +18,7 @@ describe("latex-tools observed file opening gestures", () => {
     const firstPath = path.join(scratch, "first.tex");
     for (const filePath of [firstPath, selectedPath, rootPath])
       fs.writeFileSync(filePath, "observed source\n");
+    await lumine.packages.activatePackage("tasks");
     const pack = await lumine.packages.activatePackage("latex-tools");
     const currentRequire = createRequire(path.join(pack.path, "package.json"));
     const ObservedList = currentRequire("./lib/observed-list");

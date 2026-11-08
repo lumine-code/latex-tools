@@ -1,4 +1,3 @@
-const windowService = require("./helpers/window-service");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
@@ -18,6 +17,7 @@ describe("latex-tools", () => {
     tempDirs = [];
     workspaceElement = lumine.views.getView(lumine.workspace);
     jasmine.attachToDOM(workspaceElement);
+    await lumine.packages.activatePackage("tasks");
     const pack = await lumine.packages.activatePackage("latex-tools");
     mainModule = pack.mainModule;
   });
@@ -68,91 +68,13 @@ describe("latex-tools", () => {
     });
   });
 
-  describe("provided latex-tools service", () => {
-    let service;
-
-    beforeEach(() => {
-      service = mainModule.provideLatexTools();
-    });
-
-    it("exposes the API consumed by pdf-view", () => {
-      // pdf-view calls compile() and syncToSource() and subscribes to the
-      // three build events.
-      for (const method of [
-        "compile",
-        "syncToSource",
+  describe("provided synchronization service", () => {
+    it("exposes only SyncTeX while the shared build service owns compilation", () => {
+      expect(Object.keys(mainModule.provideSynctex()).sort()).toEqual([
         "syncToPdf",
-        "onDidStartBuild",
-        "onDidFinishBuild",
-        "onDidFailBuild",
-        "onDidChangeBuildStatus",
-        "onDidUpdateMessages",
-        "onDidChangeCompileOnSave",
-        "getStatus",
-        "isBuilding",
-        "interrupt",
-        "interruptAll",
-        "getMessages",
-        "getMessageStatistics",
-        "getOutputPath",
-        "openPdf",
-        "openPdfExternal",
-        "setCompileOnSave",
-        "isCompileOnSaveEnabled",
-        "getCompileOnSaveEditors",
-        "getCompileOnSaveFiles",
-      ]) {
-        expect(typeof service[method]).toBe("function");
-      }
-    });
-
-    it("emits build lifecycle events with the file payload", () => {
-      const dir = makeTempDir();
-      const file = path.join(dir, "doc.tex");
-      fs.writeFileSync(file, "\\documentclass{article}\\begin{document}x\\end{document}");
-
-      const started = [];
-      const finished = [];
-      const failed = [];
-      const disposables = [
-        service.onDidStartBuild((data) => started.push(data)),
-        service.onDidFinishBuild((data) => finished.push(data)),
-        service.onDidFailBuild((data) => failed.push(data)),
-      ];
-
-      service.startBuild(file);
-      expect(started).toEqual([{ file }]);
-      expect(service.isBuilding(file)).toBe(true);
-      expect(service.getStatus(file).status).toBe("building");
-
-      service.finishBuild(file, "stdout text", 42);
-      expect(finished.length).toBe(1);
-      expect(finished[0].file).toBe(file);
-      expect(service.getStatus(file).status).toBe("success");
-
-      service.startBuild(file);
-      service.failBuild(file, "Exit code 12", "log");
-      expect(failed.length).toBe(1);
-      expect(failed[0].error).toBe("Exit code 12");
-      expect(service.getStatus(file).status).toBe("error");
-
-      for (const disposable of disposables) {
-        disposable.dispose();
-      }
-      service.reset();
-    });
-
-    it("delegates compile() to the main module for .tex files only", () => {
-      spyOn(mainModule, "runCompilation");
-      expect(service.compile("/tmp/doc.txt")).toBe(false);
-      expect(service.compile(null)).toBe(false);
-      expect(mainModule.runCompilation).not.toHaveBeenCalled();
-
-      const dir = makeTempDir();
-      const file = path.join(dir, "doc.tex");
-      fs.writeFileSync(file, "\\documentclass{article}");
-      expect(service.compile(file)).toBe(true);
-      expect(mainModule.runCompilation).toHaveBeenCalledWith(file);
+        "syncToSource",
+      ]);
+      expect(mainModule.buildService).toBeTruthy();
     });
   });
 
@@ -187,18 +109,20 @@ describe("latex-tools", () => {
     });
   });
 
-  describe("status-bar compilation", () => {
+  describe("PDF document compilation", () => {
     it("compiles an existing source without an open editor", async () => {
       const directory = makeTempDir();
       const sourceFile = path.join(directory, "document.tex");
       fs.writeFileSync(sourceFile, "content");
-      mainModule.currentTexFile = sourceFile;
+      const event = {
+        context: { documentItem: { filePath: sourceFile.replace(/\.tex$/, ".pdf") } },
+      };
       spyOn(lumine.workspace, "getActiveTextEditor").and.returnValue(null);
       spyOn(lumine.workspace, "getTextEditors").and.returnValue([]);
       spyOn(mainModule, "checkBuildStatus").and.returnValue(false);
       spyOn(mainModule, "runCompilation");
 
-      await mainModule.compileFromStatusBar();
+      await mainModule.compile(event);
 
       expect(mainModule.runCompilation).toHaveBeenCalledWith(sourceFile);
     });
@@ -208,7 +132,9 @@ describe("latex-tools", () => {
       const childFile = path.join(directory, "child.tex");
       const rootFile = path.join(directory, "root.tex");
       fs.writeFileSync(rootFile, "root before save");
-      mainModule.currentTexFile = childFile;
+      const event = {
+        context: { documentItem: { filePath: childFile.replace(/\.tex$/, ".pdf") } },
+      };
       spyOn(lumine.workspace, "getActiveTextEditor").and.returnValue(null);
 
       let finishRootSave;
@@ -235,7 +161,7 @@ describe("latex-tools", () => {
       spyOn(mainModule, "checkBuildStatus").and.returnValue(false);
       spyOn(mainModule, "runCompilation");
 
-      const compiling = mainModule.compileFromStatusBar();
+      const compiling = mainModule.compile(event);
       await Promise.resolve();
       await Promise.resolve();
       expect(childEditor.save).toHaveBeenCalled();
@@ -284,20 +210,17 @@ describe("latex-tools", () => {
   });
 
   describe("compile-on-save observation", () => {
-    it("observes and unobserves files, emitting service events", () => {
+    it("delegates observed files and their events to the build service", () => {
       const dir = makeTempDir();
       const file = path.join(dir, "doc.tex");
       fs.writeFileSync(file, "\\documentclass{article}");
 
       const changes = [];
-      const disposable = mainModule.buildService.onDidChangeCompileOnSave((data) =>
-        changes.push(data),
-      );
+      const disposable = mainModule.buildService.onDidChangeObserved((data) => changes.push(data));
 
       expect(mainModule.setCompileOnSaveForFile(file, true)).toBe(true);
       expect(mainModule.isCompileOnSaveEnabledForFile(file)).toBe(true);
       expect(mainModule.getCompileOnSaveFiles()).toEqual([path.resolve(file)]);
-      expect(mainModule.observedFilesStatusView.count).toBe(1);
 
       // Enabling twice is a no-op.
       expect(mainModule.setCompileOnSaveForFile(file, true)).toBe(false);
@@ -305,7 +228,6 @@ describe("latex-tools", () => {
       expect(mainModule.setCompileOnSaveForFile(file, false)).toBe(true);
       expect(mainModule.isCompileOnSaveEnabledForFile(file)).toBe(false);
       expect(mainModule.getCompileOnSaveFiles()).toEqual([]);
-      expect(mainModule.observedFilesStatusView.count).toBe(0);
 
       expect(changes.map((c) => c.enabled)).toEqual([true, false]);
       disposable.dispose();
@@ -339,7 +261,8 @@ describe("latex-tools", () => {
     let parser;
 
     beforeEach(() => {
-      parser = mainModule.logParser;
+      const LogParser = require("../lib/log-parser");
+      parser = new LogParser();
     });
 
     it("parses fatal errors with line context", () => {
@@ -466,159 +389,31 @@ describe("latex-tools", () => {
     });
   });
 
-  describe("linter integration", () => {
-    it("registers an indie linter through the linter.registry service", () => {
-      const registered = [];
-      const indie = {
-        setAllMessages() {},
-        clearMessages() {},
-        dispose: jasmine.createSpy("dispose"),
-      };
-      const registration = mainModule.consumeLinterRegistry((options) => {
-        registered.push(options);
-        return indie;
-      });
-      expect(registered).toEqual([{ name: "LaTeX" }]);
-      expect(mainModule.linterProvider.indieInstance).toBe(indie);
-
-      registration.dispose();
-      expect(indie.dispose).toHaveBeenCalled();
-      expect(mainModule.linterProvider.indieInstance).toBeNull();
-    });
-
-    describe("verbosity filtering", () => {
-      let sent;
-
-      function message(severity) {
-        return {
-          severity,
-          excerpt: `a ${severity} message`,
-          location: {
-            fullPath: "/proj/doc.tex",
-            position: { start: { row: 0, column: 0 }, end: { row: 0, column: 1 } },
-          },
-        };
-      }
-
-      function setAll() {
-        mainModule.linterProvider.setMessages([
-          message("error"),
-          message("warning"),
-          message("info"),
-          message("hint"),
-        ]);
-        return sent.map((msg) => msg.severity);
-      }
-
-      beforeEach(() => {
-        sent = [];
-        mainModule.consumeLinterRegistry(() => ({
-          setAllMessages(messages) {
-            sent = messages;
-          },
-          clearMessages() {},
-          dispose() {},
-        }));
-      });
-
-      it("drops both low-priority tiers below extended verbosity", () => {
-        lumine.config.set("latex-tools.outputVerbosity", "default");
-        expect(setAll()).toEqual(["error", "warning"]);
-      });
-
-      it("keeps info and hint messages when verbosity is extended", () => {
-        lumine.config.set("latex-tools.outputVerbosity", "extended");
-        expect(setAll()).toEqual(["error", "warning", "info", "hint"]);
-      });
-    });
-  });
-
-  describe("status bar integration", () => {
-    it("adds left and right tiles through the status-bar service", () => {
-      const left = [];
-      const right = [];
-      const leftTile = { destroy: jasmine.createSpy("destroy left tile") };
-      const rightTile = { destroy: jasmine.createSpy("destroy right tile") };
-      const registration = mainModule.consumeStatusBar(
-        windowService({
-          addLeftTile(tile) {
-            left.push(tile);
-            return leftTile;
-          },
-          addRightTile(tile) {
-            right.push(tile);
-            return rightTile;
-          },
-        }),
+  describe("diagnostics collected by build", () => {
+    it("retains detailed log ranges and applies the LaTeX verbosity policy", () => {
+      const file = path.join(makeTempDir(), "document.tex");
+      fs.writeFileSync(
+        file.replace(/\.tex$/, ".log"),
+        [
+          "This is pdfTeX",
+          "LaTeX Warning: Reference undefined on input line 3",
+          "",
+          "Overfull \\hbox (1.0pt too wide) at lines 4--4",
+          "",
+          "Package geometry Info: Driver auto-setting on input line 5",
+          "",
+        ].join("\n"),
       );
-      expect(left.length).toBe(1);
-      expect(left[0].item.classList.contains("latex-tools-status")).toBe(true);
-      expect(right.length).toBe(1);
-      expect(right[0].item.classList.contains("latex-tools-observed-status")).toBe(true);
-
-      registration.dispose();
-      expect(leftTile.destroy).toHaveBeenCalled();
-      expect(rightTile.destroy).toHaveBeenCalled();
-    });
-
-    it("marks the label when compile-on-save is enabled", () => {
-      const view = mainModule.statusBarView;
-      view.setCompileOnSave(true);
-      expect(view.label.textContent).toBe("TeX*");
-      view.setCompileOnSave(false);
-      expect(view.label.textContent).toBe("TeX");
-    });
-
-    it("does not let a late build update restore the tile over another center item", async () => {
-      const directory = makeTempDir();
-      const texFile = path.join(directory, "document.tex");
-      fs.writeFileSync(texFile, "\\documentclass{article}");
-      const editor = await lumine.workspace.open(texFile);
-      const pane = lumine.workspace.getCenter().getActivePane();
-
-      expect(mainModule.currentTexFile).toBe(texFile);
-      expect(mainModule.statusBarView.element.style.display).toBe("");
-
-      const otherItem = document.createElement("div");
-      otherItem.canCopy = () => false;
-      pane.addItem(otherItem);
-      pane.activateItem(otherItem);
-
-      expect(mainModule.currentTexFile).toBeNull();
-      expect(mainModule.statusBarView.element.style.display).toBe("none");
-
-      if (mainModule.isStatusBarActiveFor(texFile)) {
-        mainModule.statusBarView.setStatus("success");
-      }
-      expect(mainModule.statusBarView.element.style.display).toBe("none");
-
-      pane.activateItem(editor);
-      await pane.destroyItem(otherItem);
-    });
-  });
-
-  describe("open-external integration", () => {
-    it("opens the PDF through the consumed service", async () => {
-      const dir = makeTempDir();
-      const texFile = path.join(dir, "doc.tex");
-      const pdfFile = path.join(dir, "doc.pdf");
-      fs.writeFileSync(texFile, "\\documentclass{article}");
-      fs.writeFileSync(pdfFile, "%PDF-1.4");
-
-      const opened = [];
-      const disposable = mainModule.consumeOpenExternal({
-        openExternal(target) {
-          opened.push(target);
-          return Promise.resolve();
-        },
-      });
-
-      const ok = await mainModule.openPdfExternalForFile(texFile);
-      expect(ok).toBe(true);
-      expect(opened).toEqual([pdfFile]);
-
-      disposable.dispose();
-      expect(mainModule.openExternalService).toBe(null);
+      const { diagnosticsFor } = require("../lib/latex-target");
+      lumine.config.set("latex-tools.outputVerbosity", "default");
+      expect(diagnosticsFor(file, { code: 0 }).map((message) => message.severity)).toEqual([
+        "warning",
+      ]);
+      lumine.config.set("latex-tools.outputVerbosity", "extended");
+      const messages = diagnosticsFor(file, { code: 0 });
+      expect(messages.map((message) => message.severity)).toEqual(["warning", "info", "hint"]);
+      expect(messages[0].location.file).toBe(file);
+      expect(messages[0].reference.file).toBe(file.replace(/\.tex$/, ".log"));
     });
   });
 });

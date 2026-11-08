@@ -8,6 +8,7 @@ describe("LaTeX Tools independent external provider edges", () => {
     for (const method of ["openPath", "openExternal", "openApplication", "showItemInFolder"])
       spyOn(lumine.shell, method).and.resolveTo();
     spyOn(lumine.application, "openWindow").and.resolveTo();
+    await lumine.packages.activatePackage("tasks");
     main = (await lumine.packages.activatePackage("latex-tools")).mainModule;
     directory = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "latex-owned-edge-")));
     document = path.join(directory, "owned.tex");
@@ -36,7 +37,7 @@ describe("LaTeX Tools independent external provider edges", () => {
       const older = offer("older"),
         newer = offer("newer");
       if (withdrawal !== "none") (withdrawal === "older" ? older : newer).lease.dispose();
-      expect(await main.provideLatexTools().openPdfExternal(document)).toBe(true);
+      expect(await main.openPdfExternalForFile(document)).toBe(true);
       const expected = withdrawal === "newer" ? older : newer;
       expect(expected.api.openExternal).toHaveBeenCalledOnceWith(path.join(directory, "owned.pdf"));
     });

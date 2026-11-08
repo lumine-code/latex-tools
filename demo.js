@@ -1,7 +1,7 @@
 // Authentic package usage. Run with lumine/script/demo.js; fixtures stay in demo/.
 module.exports = {
   version: 1,
-  dependencies: ["language-latex", "pdf-view"],
+  dependencies: ["tasks", "language-latex", "pdf-view"],
   viewport: { width: 1250, height: 760 },
   async before() {},
   async prepare(context) {
@@ -61,7 +61,14 @@ module.exports = {
           [project, profile].some((directory) =>
             normalized.includes(directory.replace(/\\/g, "/").toLowerCase()),
           );
+        const buildIcon = document.querySelector("status-bar .tasks-status .icon-tools");
+        const iconBounds = buildIcon?.getBoundingClientRect();
         return Boolean(
+          iconBounds?.width > 0 &&
+          iconBounds?.height > 0 &&
+          !document.querySelector(
+            ".latex-tools-status, .latex-tools-observed-status, .typst-tools-status, .typst-tools-observed-status",
+          ) &&
           lumine.workspace.getCenter().getPanes().length === 2 &&
           viewer?.pdfDocument?.numPages === 1 &&
           !viewer.loading &&

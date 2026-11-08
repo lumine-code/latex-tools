@@ -33,7 +33,7 @@ describe("latex-tools bootstrap", () => {
       await lumine.packages.startPackage(packagePath);
       await lumine.packages.unloadPackage("latex-tools");
       const main = (await lumine.packages.startPackage(packagePath)).mainModule;
-      expect(typeof main.provideLatexTools().compile).toBe("function");
+      expect(typeof main.provideSynctex().syncToSource).toBe("function");
       expect(operationsLoaded()).toBe(false);
       expect(
         lumine.commands.canDispatch(lumine.workspace.getElement(), "latex-tools:global-rc"),

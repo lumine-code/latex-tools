@@ -19,11 +19,12 @@ describe("LaTeX Tools document command targets", () => {
     firstPane.splitRight();
     second = await lumine.workspace.open(path.join(directory, "second.tex"));
     firstPane.activate();
+    await lumine.packages.activatePackage("tasks");
     main = (await lumine.packages.activatePackage("latex-tools")).mainModule;
     main.consumeOpenExternal({ openExternal: async () => {} });
     spyOn(main, "runCompilation").and.stub();
     spyOn(main, "cleanFile").and.resolveTo();
-    spyOn(main, "killProcess").and.stub();
+    spyOn(main.buildService, "stop").and.returnValue(true);
     spyOn(main, "_openPdfDirect").and.resolveTo();
     spyOn(main, "_openPdfExternalDirect").and.resolveTo();
     spyOn(main, "syncToPdf").and.resolveTo(null);
@@ -58,8 +59,7 @@ describe("LaTeX Tools document command targets", () => {
         second.setText("Changed second");
       }
       if (command === "interrupt" || command === "kill-and-clean") {
-        main.buildProcesses.set(first.getPath(), { process: { label: "first" } });
-        main.buildProcesses.set(target, { process: { label: "second" } });
+        spyOn(main, "checkBuildStatus").and.returnValue(true);
       }
       await lumine.commands.dispatch(second.getElement(), "latex-tools:" + command);
       if (command === "compile") {
@@ -67,7 +67,11 @@ describe("LaTeX Tools document command targets", () => {
         expect(await fs.readFile(target, "utf8")).toBe("Changed second");
         expect(await fs.readFile(first.getPath(), "utf8")).toBe("Original first");
       } else if (command === "open-pdf")
-        expect(main._openPdfDirect).toHaveBeenCalledOnceWith(target.replace(/\.tex$/, ".pdf"));
+        expect(main._openPdfDirect).toHaveBeenCalledOnceWith(
+          target.replace(/\.tex$/, ".pdf"),
+          {},
+          target,
+        );
       else if (command === "open-pdf-external")
         expect(main._openPdfExternalDirect).toHaveBeenCalledOnceWith(
           target.replace(/\.tex$/, ".pdf"),
@@ -75,7 +79,10 @@ describe("LaTeX Tools document command targets", () => {
       else if (command === "clean" || command === "kill-and-clean")
         expect(main.cleanFile).toHaveBeenCalledOnceWith(target);
       else if (command === "interrupt")
-        expect(main.killProcess).toHaveBeenCalledOnceWith({ label: "second" });
+        expect(main.buildService.stop).toHaveBeenCalledOnceWith({
+          providerId: "latex-tools",
+          filePath: target,
+        });
       else if (command === "toggle-compile-on-save") {
         expect(main.isCompileOnSaveEnabledForFile(target)).toBe(true);
         expect(main.isCompileOnSaveEnabledForFile(first.getPath())).toBe(false);

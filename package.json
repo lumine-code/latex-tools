@@ -22,7 +22,8 @@
   "main": "./lib/main",
   "specPackages": [
     "launcher",
-    "open-external"
+    "open-external",
+    "tasks"
   ],
   "files": [
     "docs",
@@ -30,7 +31,6 @@
     "lib",
     "menus",
     "spec",
-    "styles",
     "THIRD_PARTY_NOTICES"
   ],
   "scripts": {
@@ -40,31 +40,31 @@
     "format:check": "prettier --check ."
   },
   "providedServices": {
-    "latex-tools": {
-      "versions": {
-        "1.0.0": "provideLatexTools"
-      }
-    },
     "background-tips.provider": {
       "versions": {
         "1.0.0": "provideBackgroundTips"
       }
+    },
+    "latex.synctex": {
+      "versions": {
+        "1.0.0": "provideSynctex"
+      }
+    },
+    "pdf-view.build-provider": {
+      "versions": {
+        "1.0.0": "providePdfBuildProvider"
+      }
     }
   },
   "consumedServices": {
-    "status-bar": {
-      "versions": {
-        "^2.0.0": "consumeStatusBar"
-      }
-    },
     "open-external": {
       "versions": {
         "^1.0.0": "consumeOpenExternal"
       }
     },
-    "linter.registry": {
+    "tasks": {
       "versions": {
-        "^1.0.0": "consumeLinterRegistry"
+        "^1.0.0": "consumeTasks"
       }
     }
   },

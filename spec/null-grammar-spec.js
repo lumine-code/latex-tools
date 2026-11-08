@@ -13,6 +13,7 @@ describe("latex-tools automatic builds without a grammar", () => {
     fs.writeFileSync(filePath, "source\n");
     editor = await lumine.workspace.open(filePath);
     await editor.getBuffer().getFileWatchStartPromise();
+    await lumine.packages.activatePackage("tasks");
     const pkg = await lumine.packages.activatePackage("latex-tools");
     main = pkg.mainModule;
     emitter = new Emitter();
@@ -35,7 +36,7 @@ describe("latex-tools automatic builds without a grammar", () => {
     fs.rmdirSync(directory);
   });
   it("cancels queued automatic compilation and resumes after a grammar returns", () => {
-    const compile = spyOn(main, "compileFilePath");
+    const compile = spyOn(main.buildService, "run");
     const grammar = editor.getGrammar();
     emitter.emit("change", []);
     editor.setGrammar(lumine.grammars.nullGrammar);
@@ -50,31 +51,16 @@ describe("latex-tools automatic builds without a grammar", () => {
     advanceClock(200);
     expect(compile).toHaveBeenCalledTimes(1);
   });
-  it("interrupts this document's pending build when None is selected", () => {
+  it("lets build cancel a pending automatic job when None is selected", () => {
     const filePath = editor.getPath();
-    main.buildProcesses.set(filePath, { process: {} });
-    const stop = spyOn(main, "interruptFile").and.callFake((target) => {
-      main.buildProcesses.delete(target);
-    });
+    const job = main.buildService.run({ providerId: "latex-tools", filePath, reason: "save" });
     editor.setGrammar(lumine.grammars.nullGrammar);
-    expect(stop).toHaveBeenCalledOnceWith(filePath);
-  });
-
-  it("does not interrupt a replacement build started by a failure callback", () => {
-    const filePath = editor.getPath();
-    const replacement = { process: {} };
-    main.buildProcesses.set(filePath, { process: {} });
-    const stop = spyOn(main, "interruptFile").and.callFake(() => {
-      main.buildProcesses.set(filePath, replacement);
-    });
-    editor.setGrammar(lumine.grammars.nullGrammar);
-    expect(stop).toHaveBeenCalledOnceWith(filePath);
-    expect(main.buildProcesses.get(filePath)).toBe(replacement);
-    main.buildProcesses.delete(filePath);
+    expect(job.state).toBe("cancelled");
+    expect(main.isCompileOnSaveEnabledForFile(filePath)).toBe(true);
   });
 
   it("respects closed None file associations and an open explicit grammar choice", () => {
-    const compile = spyOn(main, "compileFilePath");
+    const compile = spyOn(main.buildService, "run");
     const grammar = editor.getGrammar();
     const extension = path.extname(editor.getPath()).slice(1);
     lumine.config.set("core.customFileTypes", {
@@ -91,13 +77,12 @@ describe("latex-tools automatic builds without a grammar", () => {
     expect(compile).not.toHaveBeenCalled();
   });
 
-  it("does not discover roots or read source for a None status tile", () => {
+  it("does not discover roots while querying a suspended document", () => {
     editor.setGrammar(lumine.grammars.nullGrammar);
     const discover = spyOn(main, "getRootFilePath").and.returnValue(editor.getPath());
-    main.updateStatusBarVisibility(editor, "editor");
-    main.isStatusBarActiveFor(editor.getPath());
-    main.buildService.getStatus(editor.getPath());
-    main.buildService.isBuilding(editor.getPath());
+    require("../lib/document-analysis").rootForDocument(main, editor.getPath());
+    main.getBuildState(editor.getPath());
+    main.checkBuildStatus(editor.getPath());
     expect(discover).not.toHaveBeenCalled();
   });
 
@@ -108,7 +93,7 @@ describe("latex-tools automatic builds without a grammar", () => {
     try {
       rootEditor.setGrammar(lumine.grammars.nullGrammar);
       spyOn(main, "getRootFilePath").and.returnValue(rootPath);
-      const compile = spyOn(main, "compileFilePath");
+      const compile = spyOn(main.buildService, "run");
       emitter.emit("change", []);
       advanceClock(200);
       expect(compile).not.toHaveBeenCalled();

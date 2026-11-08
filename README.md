@@ -2,7 +2,7 @@
 
 Compile LaTeX documents with latexmk and view PDFs.
 
-Includes SyncTeX support, compile-on-save, integrated linting, and multiple build management.
+Includes SyncTeX support and LaTeX document discovery. The Tasks package runs compilation jobs, manages compile-on-save, collects output and publishes diagnostics.
 
 ## Features
 
@@ -10,7 +10,7 @@ Includes SyncTeX support, compile-on-save, integrated linting, and multiple buil
 - **Compile-on-save**: automatically recompile when an observed file is saved.
 - **PDF viewing**: open PDFs internally via [pdf-view](https://github.com/lumine-code/pdf-view) or in an external viewer.
 - **SyncTeX**: forward and backward search between source and PDF.
-- **Linter integration**: error and warning reporting via `linter.registry` with clickable references to source locations.
+- **Linter integration**: error and warning reporting through the shared Tasks service with clickable references to source locations.
 - **Multiple builds**: compile multiple files simultaneously with independent build states.
 - **Magic comments**: per-file engine and root selection with `% !TEX program` and `% !TEX root`.
 
@@ -28,11 +28,17 @@ This package requires `latexmk` and a LaTeX distribution to be installed on your
 - **macOS**: [MacTeX](https://www.tug.org/mactex/) or `brew install --cask mactex`
 - **Linux**: e.g. `sudo apt install texlive-full latexmk`
 
+The [tasks](https://github.com/lumine-code/tasks) package must also be installed and enabled. It owns compilation jobs and file observation; LaTeX Tools registers its document provider through the shared Tasks service.
+
 If `latexmk` is not in your PATH, set the full path in the package settings under **Path to latexmk**. The `latex-tools:global-rc` command opens your global `latexmkrc` file to customize `latexmk` behavior (e.g. glossaries support).
 
-The status bar item shows the build state of the active file with a live timer (`TeX` idle, `TeX*` compile-on-save enabled; an eye icon with `TeX (N)` counts observed files). Left click compiles, alt-left click toggles compile-on-save, middle click splits PDF and TeX source, and right click opens a menu containing all these actions and Stop and Clean. The observed-file counter opens the list on left click and a menu with list and stop-all actions on right click. The item stays visible while viewing the output PDF, and opening a PDF during a build waits for completion before showing the updated file. Multi-file projects are supported: the build root is resolved from `% !TEX root` magic comments, `.fls` recorder files, or by scanning for documents that include the current file.
+With **Clean auxiliary files after build** enabled, compilation runs normally, diagnostics are collected, and configured auxiliary files are removed only after success. The source, PDF and SyncTeX map are retained, and recorder dependencies remain available for compile-on-save.
 
-Automatic compilation pauses while an open source document uses the None grammar. Selecting None cancels its queued automatic build and interrupts its running build; choosing a grammar lets later file changes compile again. The file remains on the observed-files list, and explicit build and file operations remain available.
+The shared Tasks status-bar control shows active jobs, retained logs and observed documents for every provider. Use **Packages > LaTeX Tools** for LaTeX commands and **Observed Files** for the LaTeX-only list. Opening a PDF during a build waits for completion before showing the updated file. Multi-file projects are supported: the build root is resolved from `% !TEX root` magic comments, `.fls` recorder files, or by scanning for documents that include the current file.
+
+PDF View uses LaTeX Tools' PDF build provider to resolve the source and rebuild it with F12 through Tasks without opening its panel, including existing PDFs with no build history.
+
+The Tasks service owns file observation and automatic compilation. Automatic compilation pauses while an open source document uses the None grammar. Selecting None cancels its queued automatic build and interrupts its running build; choosing a grammar lets later file changes compile again. The file remains on the observed-files list, and explicit build and file operations remain available.
 
 ## Commands
 
@@ -64,26 +70,12 @@ Actions shown for `.latex-tools-observed-files-list`:
 - `latex-tools:unobserve-selected-file`: stop observing the selected file,
 - `latex-tools:clear-all-observed-files`: stop observing all compile-on-save files.
 
-Status tooltips show the current state and primary click action with its matching keyboard binding; secondary actions are available in context menus.
-
-## Customization
-
-The status-bar item can be restyled from your `styles.css`, e.g.:
-
-```css
-.latex-tools-status {
-  &.status-building {
-    color: var(--text-color-info);
-  }
-}
-```
-
 ## Services
 
-- [`latex-tools`](docs/latex-tools.md): provided to let other packages drive LaTeX compilation — subscribe to build events (`onDidStartBuild`, `onDidFinishBuild`, `onDidFailBuild`, `onDidChangeBuildStatus`), query status (`getStatus`, `isBuilding`), control builds (`compile`, `interrupt`, `interruptAll`), and resolve SyncTeX positions (`syncToPdf`, `syncToSource`).
-- `status-bar`: consumed to show the build state, timer, and observed-files counter in the status bar.
+- [`latex.synctex`](docs/latex.synctex.md): provides forward and backward synchronization between LaTeX source and PDF.
+- [`pdf-view.build-provider`](https://github.com/lumine-code/pdf-view/blob/master/docs/pdf-view.build-provider.md): resolves PDF ownership, validates restored source hints against the root PDF path, and routes PDF View builds through LaTeX Tools.
+- [`tasks`](https://github.com/lumine-code/tasks/blob/master/docs/tasks.md): consumed to register the `latex-tools` provider and share compilation jobs, output, diagnostics, PDF artifacts and file observation.
 - `open-external`: consumed to open generated PDFs in an external viewer.
-- `linter.registry`: consumed to report LaTeX errors, warnings, infos, and hints in the diagnostics panel.
 
 ## Contributing
 
