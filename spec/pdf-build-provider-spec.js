@@ -7,6 +7,26 @@ const manifest = require("../package.json");
 
 describe("LaTeX PDF build provider", () => {
   let main, backend, provider, directory, source, pdf, leases;
+
+  async function holdSourceInspection() {
+    const nativeStat = promises.stat;
+    const stats = await nativeStat.call(promises, source);
+    let finish, entered;
+    const pending = new Promise((resolve) => {
+      finish = () => resolve(stats);
+    });
+    const started = new Promise((resolve) => {
+      entered = resolve;
+    });
+    spyOn(promises, "stat").and.callFake((filePath, ...args) => {
+      if (filePath !== source) return nativeStat.call(promises, filePath, ...args);
+      entered();
+      return pending;
+    });
+    leases.push(new Disposable(finish));
+    return { started, finish };
+  }
+
   beforeEach(async () => {
     jasmine.useRealClock();
     directory = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "latex-pdf-provider-")));
@@ -220,56 +240,32 @@ describe("LaTeX PDF build provider", () => {
   });
 
   it("honors cancellation while resolving the source", async () => {
-    let finish;
-    const nativeStat = promises.stat;
-    spyOn(promises, "stat").and.callFake((filePath, ...args) =>
-      filePath === source
-        ? new Promise((resolve) => {
-            finish = resolve;
-          })
-        : nativeStat.call(promises, filePath, ...args),
-    );
+    const inspection = await holdSourceInspection();
     const controller = new AbortController();
     const resolving = provider.resolveSource(pdf, { signal: controller.signal });
-    await conditionPromise(() => Boolean(finish), "pending source inspection");
+    await inspection.started;
     controller.abort();
-    finish({ isFile: () => true });
+    inspection.finish();
     await expectAsync(resolving).toBeRejected();
   });
 
   it("discards a pending reply after the authoritative source changes", async () => {
-    let finish;
-    const nativeStat = promises.stat;
-    spyOn(promises, "stat").and.callFake((filePath, ...args) =>
-      filePath === source
-        ? new Promise((resolve) => {
-            finish = resolve;
-          })
-        : nativeStat.call(promises, filePath, ...args),
-    );
+    const inspection = await holdSourceInspection();
     const resolving = provider.resolveSource(pdf);
-    await conditionPromise(() => Boolean(finish), "pending source inspection");
+    await inspection.started;
     backend.associateArtifact({ providerId: "latex-tools", filePath: source }, pdf);
-    finish({ isFile: () => true });
+    inspection.finish();
     expect(await resolving).toBeNull();
   });
 
   it("keeps retired payloads and pending source replies inert after reactivation", async () => {
-    let finish;
-    const nativeStat = promises.stat;
-    spyOn(promises, "stat").and.callFake((filePath, ...args) =>
-      filePath === source
-        ? new Promise((resolve) => {
-            finish = resolve;
-          })
-        : nativeStat.call(promises, filePath, ...args),
-    );
+    const inspection = await holdSourceInspection();
     const resolving = provider.resolveSource(pdf);
-    await conditionPromise(() => Boolean(finish), "pending source inspection");
+    await inspection.started;
     const stale = provider;
     await lumine.packages.deactivatePackage("latex-tools");
     main = (await lumine.packages.activatePackage("latex-tools")).mainModule;
-    finish({ isFile: () => true });
+    inspection.finish();
     expect(await resolving).toBeNull();
     expect(await stale.resolveSource(pdf)).toBeNull();
     expect(stale.canBuild(source)).toBeFalse();
