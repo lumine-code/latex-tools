@@ -392,6 +392,7 @@ describe("latex-tools", () => {
   describe("diagnostics collected by build", () => {
     it("retains detailed log ranges and applies the LaTeX verbosity policy", () => {
       const file = path.join(makeTempDir(), "document.tex");
+      fs.writeFileSync(file, "\\documentclass{article}\n");
       fs.writeFileSync(
         file.replace(/\.tex$/, ".log"),
         [
@@ -404,13 +405,12 @@ describe("latex-tools", () => {
           "",
         ].join("\n"),
       );
-      const { diagnosticsFor } = require("../lib/latex-target");
+      const { diagnosticsFor, snapshotDiagnostics } = require("../lib/latex-target");
+      const result = { code: 0, plan: { diagnosticSnapshot: snapshotDiagnostics(file) } };
       lumine.config.set("latex-tools.outputVerbosity", "default");
-      expect(diagnosticsFor(file, { code: 0 }).map((message) => message.severity)).toEqual([
-        "warning",
-      ]);
+      expect(diagnosticsFor(file, result).map((message) => message.severity)).toEqual(["warning"]);
       lumine.config.set("latex-tools.outputVerbosity", "extended");
-      const messages = diagnosticsFor(file, { code: 0 });
+      const messages = diagnosticsFor(file, result);
       expect(messages.map((message) => message.severity)).toEqual(["warning", "info", "hint"]);
       expect(messages[0].location.file).toBe(file);
       expect(messages[0].reference.file).toBe(file.replace(/\.tex$/, ".log"));

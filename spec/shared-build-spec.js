@@ -5,9 +5,10 @@ const childProcess = require("node:child_process");
 const { EventEmitter } = require("node:events");
 
 describe("LaTeX compilation through the shared Tasks service", () => {
-  let main, service, directory, source, children, spawn, editors;
+  let main, service, directory, source, children, spawn, editors, previousPaths;
   beforeEach(async () => {
     jasmine.useRealClock();
+    previousPaths = lumine.project.getPaths();
     const language = await lumine.packages.activatePackage("language-text");
     await language.resourceLoadPromise;
     await lumine.packages.activatePackage("tasks");
@@ -16,6 +17,7 @@ describe("LaTeX compilation through the shared Tasks service", () => {
     directory = fs.mkdtempSync(path.join(os.tmpdir(), "latex-shared-build-"));
     source = path.join(directory, "document.tex");
     fs.writeFileSync(source, "% !TEX program = xelatex\n\\documentclass{article}\n");
+    lumine.project.setPaths([directory]);
     children = [];
     editors = [];
     const nativeSpawn = childProcess.spawn;
@@ -38,9 +40,13 @@ describe("LaTeX compilation through the shared Tasks service", () => {
       .filter((call) => call.args[0] === "latexmk")
       .at(-1);
   }
+  function waitForCompilers(count = 1) {
+    return conditionPromise(() => children.length === count, "LaTeX compiler launch");
+  }
   afterEach(async () => {
     for (const editor of editors) editor.destroy();
     await lumine.packages.deactivatePackage("latex-tools");
+    lumine.project.setPaths(previousPaths);
     await lumine.fileWatchClient.settlePendingTeardown();
     const owned = fs.realpathSync(directory);
     if (
@@ -57,7 +63,7 @@ describe("LaTeX compilation through the shared Tasks service", () => {
       starts.push(job.artifacts.map((artifact) => ({ ...artifact }))),
     );
     const job = main.providePdfBuildProvider().build(source);
-    await flushMicrotasks();
+    await waitForCompilers();
     expect(children.length).toBe(1);
     expect(latestCompilerCall().args[0]).toBe("latexmk");
     expect(latestCompilerCall().args[1]).toContain("-xelatex");
@@ -99,7 +105,8 @@ describe("LaTeX compilation through the shared Tasks service", () => {
       await lumine.commands.dispatch(editor.getElement(), "latex-tools:compile");
       const job = service.getJob({ providerId: "latex-tools", filePath: source });
       expect(job).toBeTruthy();
-      await conditionPromise(() => job.state === "running", "background LaTeX compilation");
+      await waitForCompilers();
+      expect(job.state).toBe("running");
       expect(ensurePanel).not.toHaveBeenCalled();
       fs.writeFileSync(
         source.replace(/\.tex$/, ".log"),
@@ -131,7 +138,7 @@ describe("LaTeX compilation through the shared Tasks service", () => {
     const rootJob = service.run({ providerId: "latex-tools", filePath: child, reason: "manual" });
     expect(main.runCompilation(source)).toBe(rootJob);
     const otherJob = main.runCompilation(other);
-    await flushMicrotasks();
+    await waitForCompilers(2);
     expect(children.length).toBe(2);
     expect(service.getJobs({ providerId: "latex-tools", activeOnly: true }).length).toBe(2);
     children[0].emit("close", 0, null);
@@ -171,7 +178,7 @@ describe("LaTeX compilation through the shared Tasks service", () => {
     try {
       const job = await build.runTarget(target);
       await started;
-      await flushMicrotasks();
+      await waitForCompilers();
       expect(job.filePath).toBe(rootPath);
       expect(fs.readFileSync(childPath, "utf8")).toBe(childText);
       expect(fs.readFileSync(rootPath, "utf8")).toBe(rootText);
@@ -188,7 +195,7 @@ describe("LaTeX compilation through the shared Tasks service", () => {
   it("withdraws its provider, jobs and observations when deactivated", async () => {
     main.setCompileOnSaveForFile(source, true);
     const job = main.runCompilation(source);
-    await flushMicrotasks();
+    await waitForCompilers();
     expect(children.length).toBe(1);
     await lumine.packages.deactivatePackage("latex-tools");
     await job.completion;
@@ -200,12 +207,12 @@ describe("LaTeX compilation through the shared Tasks service", () => {
     ).toBeNull();
   });
 
-  it("cleans successful builds after collecting diagnostics and retaining recorder dependencies", async () => {
+  it("cleans successful builds and retains recorder dependencies only for the unchanged source", async () => {
     lumine.config.set("latex-tools.cleanAuxFiles", true);
     lumine.config.set("latex-tools.cleanExtensions", ["{basename}.*"]);
     main.setCompileOnSaveForFile(source, true);
     const job = main.runCompilation(source);
-    await flushMicrotasks();
+    await waitForCompilers();
     expect(latestCompilerCall().args[1]).not.toContain("-c");
     const bibliography = path.join(directory, "references.bib");
     const figure = path.join(directory, "figure.pdf");
@@ -230,12 +237,16 @@ describe("LaTeX compilation through the shared Tasks service", () => {
     expect(main.getWatchPaths(source)).toContain(bibliography);
     expect(main.getWatchPaths(source)).toContain(figure);
     expect(main.getWatchPaths(source)).not.toContain(auxiliary);
+    const chapter = path.join(directory, "new-chapter.tex");
+    fs.unlinkSync(source);
+    fs.writeFileSync(source, "\\documentclass{article}\n\\input{new-chapter}\n");
+    expect(main.getWatchPaths(source)).toEqual([source, chapter]);
   });
 
   it("retains a failed build's log and auxiliary files for investigation", async () => {
     lumine.config.set("latex-tools.cleanAuxFiles", true);
     const job = main.runCompilation(source);
-    await flushMicrotasks();
+    await waitForCompilers();
     const log = source.replace(/\.tex$/, ".log");
     const auxiliary = source.replace(/\.tex$/, ".aux");
     fs.writeFileSync(log, "This is XeTeX\n! Undefined control sequence.\nl.5 \\badcommand\n");
@@ -246,6 +257,118 @@ describe("LaTeX compilation through the shared Tasks service", () => {
     expect(job.diagnostics[0].excerpt).toBe("Undefined control sequence.");
     expect(fs.existsSync(log)).toBe(true);
     expect(fs.existsSync(auxiliary)).toBe(true);
+  });
+
+  it("reports a launcher failure instead of errors from an earlier compilation", async () => {
+    const log = source.replace(/\.tex$/, ".log");
+    const oldLog = "This is XeTeX\n! Undefined control sequence.\nl.5 \\oldcommand\n";
+    fs.writeFileSync(log, oldLog);
+    const job = main.runCompilation(source);
+    await waitForCompilers();
+    children[0].emit("error", new Error("Unable to launch this compiler"));
+    children[0].emit("close", null, null);
+    await job.completion;
+    expect(job.state).toBe("failed");
+    expect(job.diagnostics.map((message) => message.excerpt)).toEqual([
+      "Unable to launch this compiler",
+    ]);
+    expect(fs.readFileSync(log, "utf8")).toBe(oldLog);
+  });
+
+  it("does not reuse an unchanged old log when latexmk fails before writing a new one", async () => {
+    const log = source.replace(/\.tex$/, ".log");
+    fs.writeFileSync(log, "This is XeTeX\n! Undefined control sequence.\nl.5 \\oldcommand\n");
+    const job = main.runCompilation(source);
+    await waitForCompilers();
+    children[0].emit("close", 12, null);
+    await job.completion;
+    expect(job.diagnostics.map((message) => message.excerpt)).toEqual(["Failure in making files"]);
+    expect(fs.existsSync(log)).toBe(true);
+  });
+
+  it("preserves warnings when successful latexmk has nothing to rebuild", async () => {
+    const log = source.replace(/\.tex$/, ".log");
+    fs.writeFileSync(log, "This is XeTeX\nLaTeX Warning: Reference undefined on input line 3\n");
+    const job = main.runCompilation(source);
+    await waitForCompilers();
+    children[0].stdout.emit("data", Buffer.from("Latexmk: Nothing to do for 'document.tex'.\n"));
+    children[0].emit("close", 0, null);
+    await job.completion;
+    expect(job.state).toBe("passed");
+    expect(job.diagnostics.map((message) => message.severity)).toEqual(["warning"]);
+  });
+
+  it("does not present an unchanged failed log as a successful no-op result", async () => {
+    const log = source.replace(/\.tex$/, ".log");
+    fs.writeFileSync(log, "This is XeTeX\n! Undefined control sequence.\nl.5 \\oldcommand\n");
+    const job = main.runCompilation(source);
+    await waitForCompilers();
+    children[0].emit("close", 0, null);
+    await job.completion;
+    expect(job.state).toBe("passed");
+    expect(job.diagnostics).toEqual([]);
+  });
+
+  it("does not mistake a copied old log's recent metadata for a fresh TeX result", async () => {
+    const log = source.replace(/\.tex$/, ".log");
+    fs.writeFileSync(log, "This is XeTeX\nLaTeX Warning: Reference undefined on input line 3\n");
+    const old = new Date("2000-01-01T00:00:00Z");
+    fs.utimesSync(log, old, old);
+    const job = main.runCompilation(source);
+    await waitForCompilers();
+    children[0].emit("close", 0, null);
+    await job.completion;
+    expect(job.state).toBe("passed");
+    expect(job.diagnostics).toEqual([]);
+  });
+
+  it("rejects an unchanged log after its source is recreated with the original mtime", async () => {
+    const log = source.replace(/\.tex$/, ".log");
+    fs.writeFileSync(log, "This is XeTeX\nLaTeX Warning: Reference undefined on input line 3\n");
+    const original = fs.statSync(source);
+    // Preserve the old mtime just as a copy/restore operation can. The new
+    // source's ctime must still prevent it inheriting the previous diagnostics.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    fs.unlinkSync(source);
+    fs.writeFileSync(source, "\\documentclass{article}\nNew source\n");
+    fs.utimesSync(source, original.atime, original.mtime);
+    const job = main.runCompilation(source);
+    await waitForCompilers();
+    children[0].emit("close", 0, null);
+    await job.completion;
+    expect(job.state).toBe("passed");
+    expect(job.diagnostics).toEqual([]);
+    expect(fs.existsSync(log)).toBe(true);
+  });
+
+  it("rejects an unchanged log when a chapter has changed since that log was written", async () => {
+    const child = path.join(directory, "chapter.tex");
+    fs.writeFileSync(source, "\\documentclass{article}\n\\input{chapter}\n");
+    fs.writeFileSync(child, "Old chapter\n");
+    const log = source.replace(/\.tex$/, ".log");
+    fs.writeFileSync(log, "This is XeTeX\nLaTeX Warning: Reference undefined on input line 3\n");
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    fs.writeFileSync(child, "Changed chapter\n");
+    const job = main.runCompilation(source);
+    await waitForCompilers();
+    children[0].emit("close", 0, null);
+    await job.completion;
+    expect(job.diagnostics).toEqual([]);
+  });
+
+  it("accepts a freshly rewritten failure log even when its text has not changed", async () => {
+    const log = source.replace(/\.tex$/, ".log");
+    const text = "This is XeTeX\n! Undefined control sequence.\nl.5 \\badcommand\n";
+    fs.writeFileSync(log, text);
+    const job = main.runCompilation(source);
+    await waitForCompilers();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    fs.writeFileSync(log, text);
+    children[0].emit("close", 12, null);
+    await job.completion;
+    expect(job.diagnostics.map((message) => message.excerpt)).toEqual([
+      "Undefined control sequence.",
+    ]);
   });
 
   for (const kind of ["source", "pdf"]) {
@@ -294,5 +417,18 @@ describe("LaTeX compilation through the shared Tasks service", () => {
     expect(main.getWatchPaths(source)).toContain(figure);
     expect(main.getWatchPaths(source)).not.toContain(auxiliary);
     expect(main.getWatchPaths(source)).not.toContain(output);
+  });
+
+  it("tracks missing explicit and recorder inputs so their creation invalidates a result", () => {
+    const child = path.join(directory, "missing-chapter.tex");
+    const imported = path.join(directory, "chapters", "imported.tex");
+    const bibliography = path.join(directory, "missing-references.bib");
+    fs.writeFileSync(
+      source,
+      "\\documentclass{article}\n\\input{missing-chapter}\n\\import{chapters/}{imported}\n",
+    );
+    expect(main.getWatchPaths(source)).toEqual([source, child, imported]);
+    fs.writeFileSync(source.replace(/\.tex$/, ".fls"), `INPUT ${bibliography}\n`);
+    expect(main.getWatchPaths(source)).toEqual([source, child, imported, bibliography]);
   });
 });
