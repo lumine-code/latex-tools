@@ -1,18 +1,18 @@
 {
   "title": "latex-tools",
   "description": "Compile a LaTeX document and inspect the generated PDF beside its source.",
-  "recordedOn": "2026-11-03",
-  "sourceRevision": "802d860fde8dba769219eaa92bee4c23d3291ff4",
-  "themeSourceRevision": "e4e4b93ad9f726aee473242787587188cd8c4bf7",
+  "recordedOn": "2026-11-07",
+  "sourceRevision": "b55562b60c3e1b04ce6dd152705314c2ddbce738",
+  "themeSourceRevision": "c63e492937bbcb7cb1a021cdc1c0284f990ac4d5",
   "mode": "normal",
   "fontSettings": "default",
   "scenario": "demo.js",
-  "recipeHash": "9cd2c4c8797fedee0156593b7988dd573366c66b6b23402b37923fcdbd0a09ed",
+  "recipeHash": "81462d0a406a63ae56cb70664f1ed86162c1c4ae8f0ca15c88f48cc42deb5902",
   "environment": {
     "platform": "win32",
     "arch": "x64",
-    "electron": "45.2.1",
-    "chrome": "156.0.8078.75",
+    "electron": "45.2.3",
+    "chrome": "156.0.8078.80",
     "devicePixelRatio": 1,
     "locale": "en-GB",
     "fontFamily": "Fira Code, Menlo, DejaVu Sans Mono, Consolas, monospace",
@@ -24,34 +24,39 @@
   "privacy": { "version": 1, "location": "neutral", "textChecked": true },
   "sources": {
     "editor": {
-      "revision": "3c7d1226013c1bacce6ee09a0b1baa5a2a15ca5b",
+      "revision": "3709351ae9bd91a9e16eee6f03a4e26a3d86b443",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     "package": {
-      "revision": "802d860fde8dba769219eaa92bee4c23d3291ff4",
-      "dirty": false,
-      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      "revision": "b55562b60c3e1b04ce6dd152705314c2ddbce738",
+      "dirty": true,
+      "workingTreeHash": "de415ed742470f49e6b0b7a7086ff3ca3ef64a1ca4608f6e7480eb8be2a4ca30"
     },
     "latex-tools": {
-      "revision": "802d860fde8dba769219eaa92bee4c23d3291ff4",
-      "dirty": false,
-      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      "revision": "b55562b60c3e1b04ce6dd152705314c2ddbce738",
+      "dirty": true,
+      "workingTreeHash": "de415ed742470f49e6b0b7a7086ff3ca3ef64a1ca4608f6e7480eb8be2a4ca30"
+    },
+    "build": {
+      "revision": "a4923d0b8f1a91ca36ece6069883c030ffe8d2fb",
+      "dirty": true,
+      "workingTreeHash": "857f0a47e9fab1bff071c69677624e68acd7bfde1256fee77a0fb892420dc2d7"
     },
     "language-latex": {
-      "revision": "b64f06278b4396a7544f15e4ae2942fb2badd326",
+      "revision": "9a85b207dca309faebbad661cc4f917e3b52e9f6",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     "one-theme": {
-      "revision": "e4e4b93ad9f726aee473242787587188cd8c4bf7",
+      "revision": "c63e492937bbcb7cb1a021cdc1c0284f990ac4d5",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     "pdf-view": {
-      "revision": "405434009193f5bb9ff94fdcaecff4469139a886",
-      "dirty": false,
-      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      "revision": "722a64fe201646461a21a8a8fad2d9604f267673",
+      "dirty": true,
+      "workingTreeHash": "f7c848ce6da1593e39f01ff1b2aea5a29355606d32465c32727e81b832a0207f"
     }
   },
   "fixtures": [
@@ -66,7 +71,7 @@
       "label": "Compile a LaTeX document and inspect the generated PDF beside its source.",
       "width": 1250,
       "height": 760,
-      "sha256": "6711c032ee377d76c1726a8fe716f44419ca1ae2697193314588283955682095"
+      "sha256": "d5a0b8c088da08e7b69f6798b605bb98391a1675abd41489795a3c0a1c8fe08d"
     }
   ]
 }
