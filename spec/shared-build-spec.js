@@ -88,6 +88,24 @@ describe("LaTeX compilation through the shared Tasks service", () => {
     lease.dispose();
   });
 
+  it("publishes and runs the PDF action for a successful retained execution", async () => {
+    const job = main.runCompilation(source);
+    await waitForCompilers();
+    const pdf = source.replace(/\.tex$/, ".pdf");
+    fs.writeFileSync(pdf, "%PDF-1.7\nOwned compiled output\n");
+    children[0].emit("close", 0, null);
+    await job.completion;
+    expect(service.getActions(job).map(({ id, label }) => ({ id, label }))).toEqual([
+      { id: "open-pdf", label: "Open PDF" },
+    ]);
+    const open = spyOn(lumine.workspace, "open").and.resolveTo({});
+
+    expect(await service.runAction(job, "open-pdf")).toBeTrue();
+
+    expect(open.calls.mostRecent().args[0]).toBe(pdf);
+    expect(service.getArtifactTarget(pdf)).toEqual({ providerId: "latex-tools", filePath: source });
+  });
+
   for (const [code, state] of [
     [0, "passed"],
     [12, "failed"],

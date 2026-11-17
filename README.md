@@ -36,6 +36,8 @@ With **Clean auxiliary files after build** enabled, compilation runs normally, d
 
 The shared Tasks status-bar control shows active jobs, retained logs and observed documents for every provider. Use **Packages > LaTeX Tools** for LaTeX commands and **Observed Files** for the LaTeX-only list. Opening a PDF during a build waits for completion before showing the updated file. Multi-file projects are supported: the build root is resolved from `% !TEX root` magic comments, `.fls` recorder files, or by scanning for documents that include the current file.
 
+Successful executions offer **Open PDF** in their Tasks notification and detail toolbar when the declared PDF output is available, including up-to-date builds that reuse an existing PDF. The action opens that execution's output path and checks the file again before opening it; failed or cancelled executions do not offer it.
+
 PDF View uses LaTeX Tools' PDF build provider to resolve the source and rebuild it with F12 through Tasks without opening its panel, including existing PDFs with no build history.
 
 The Tasks service owns file observation and automatic compilation. Automatic compilation pauses while an open source document uses the None grammar. Selecting None cancels its queued automatic build and interrupts its running build; choosing a grammar lets later file changes compile again. The file remains on the observed-files list, and explicit build and file operations remain available.
