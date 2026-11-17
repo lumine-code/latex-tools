@@ -7,7 +7,7 @@ Includes SyncTeX support and LaTeX document discovery. The Tasks package runs co
 ## Features
 
 - **Compilation**: build documents using `latexmk` with configurable engines.
-- **Compile-on-save**: automatically recompile when the observed TeX source changes.
+- **Compile-on-save**: automatically recompile when the observed TeX source is saved.
 - **PDF viewing**: open PDFs internally via [pdf-view](https://github.com/lumine-code/pdf-view) or in an external viewer.
 - **SyncTeX**: forward and backward search between source and PDF.
 - **Linter integration**: error and warning reporting through the shared Tasks service with clickable references to source locations.
@@ -40,7 +40,7 @@ PDF View uses LaTeX Tools' PDF build provider to resolve the source and rebuild 
 
 The Tasks service owns file observation and automatic compilation. Automatic compilation pauses while an open source document uses the None grammar. Selecting None cancels its queued automatic build and interrupts its running build; choosing a grammar lets later file changes compile again. The file remains on the observed-files list, and explicit build and file operations remain available.
 
-Automatic LaTeX compilation follows only the observed root `.tex` file. Changes to included chapters, PDFs, images, bibliography and style files, or generated auxiliary files do not trigger it. The compiler's complete input list remains available for diagnostic validity checks.
+Automatic LaTeX compilation follows saves of the observed root `.tex` file, including saves that write the same text. A generator can update figures and then save the root to request a build; `latexmk` decides what needs rebuilding. Changes to included chapters, PDFs, images, bibliography and style files, or generated auxiliary files alone do not trigger it. The compiler's complete input list remains available for diagnostic validity checks.
 
 ## Commands
 

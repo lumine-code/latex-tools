@@ -70,7 +70,7 @@ describe("LaTeX automatic compilation source paths", () => {
     ]);
   });
 
-  it("builds only changed root content and ignores chapter and other dependency changes", async () => {
+  it("builds same-text root saves after generated inputs change and ignores dependency changes alone", async () => {
     const watched = [];
     const nativeWatch = lumine.fileWatchClient.watchFile.bind(lumine.fileWatchClient);
     spyOn(lumine.fileWatchClient, "watchFile").and.callFake((filePath, ...args) => {
@@ -106,8 +106,9 @@ describe("LaTeX automatic compilation source paths", () => {
     expect(children.length).toBe(0);
     expect(service.getJobs({ providerId: "latex-tools" })).toEqual([]);
 
-    fs.appendFileSync(source, "% Externally generated source revision\n");
-    await conditionPromise(() => children.length === 1, "the external TeX edit to compile");
+    const original = fs.readFileSync(source);
+    fs.writeFileSync(source, original);
+    await conditionPromise(() => children.length === 1, "the same-text root save to compile");
     const first = service.getJob({ providerId: "latex-tools", filePath: source });
     expect(first.reason).toBe("save");
     await changeDependencies("updated during compilation\n");
@@ -123,8 +124,8 @@ describe("LaTeX automatic compilation source paths", () => {
     expect(children.length).toBe(1);
     expect(service.getJobs({ providerId: "latex-tools" })).toEqual([first]);
 
-    fs.appendFileSync(source, "% Another external root revision\n");
-    await conditionPromise(() => children.length === 2, "the next root revision to compile");
+    fs.writeFileSync(source, original);
+    await conditionPromise(() => children.length === 2, "the next same-text root save to compile");
     const second = service.getJob({ providerId: "latex-tools", filePath: source });
     expect(second).not.toBe(first);
     expect(second.reason).toBe("save");
@@ -134,7 +135,7 @@ describe("LaTeX automatic compilation source paths", () => {
     expect(service.getJobs({ providerId: "latex-tools" })).toEqual([first, second]);
   });
 
-  it("does not rerun when a split source write restores the same bytes across completion", async () => {
+  it("queues one follow-up for a split same-text source save across completion", async () => {
     let sourceWatch;
     const nativeWatch = lumine.fileWatchClient.watchFile.bind(lumine.fileWatchClient);
     spyOn(lumine.fileWatchClient, "watchFile").and.callFake((filePath, ...args) => {
@@ -179,20 +180,26 @@ describe("LaTeX automatic compilation source paths", () => {
     }
     await first.completion;
     await entry.observation.hasChanges();
-    await timeoutPromise(250);
     expect(intermediateSeen).toBeTrue();
     expect(fs.readFileSync(source)).toEqual(original);
-    expect(children.length).toBe(1);
-    expect(service.getJobs({ providerId: "latex-tools" })).toEqual([first]);
     expect(first.state).toBe("passed");
-
-    fs.appendFileSync(source, "% A meaningful root edit after the split write\n");
-    await conditionPromise(() => children.length === 2, "the changed root to compile");
+    await conditionPromise(() => children.length === 2, "the settled same-text save to compile");
     const second = service.getJob({ providerId: "latex-tools", filePath: source });
     expect(second.reason).toBe("save");
     children[1].emit("close", 0, null);
     await second.completion;
+    await timeoutPromise(350);
     expect(second.state).toBe("passed");
+    expect(children.length).toBe(2);
     expect(service.getJobs({ providerId: "latex-tools" })).toEqual([first, second]);
+
+    fs.appendFileSync(source, "% A meaningful root edit after the split write\n");
+    await conditionPromise(() => children.length === 3, "the changed root to compile");
+    const third = service.getJob({ providerId: "latex-tools", filePath: source });
+    expect(third.reason).toBe("save");
+    children[2].emit("close", 0, null);
+    await third.completion;
+    expect(third.state).toBe("passed");
+    expect(service.getJobs({ providerId: "latex-tools" })).toEqual([first, second, third]);
   });
 });
