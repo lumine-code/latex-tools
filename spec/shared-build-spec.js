@@ -234,13 +234,13 @@ describe("LaTeX compilation through the shared Tasks service", () => {
     for (const file of [source, output, sync, bibliography, figure])
       expect(fs.existsSync(file)).toBe(true);
     for (const file of [auxiliary, log, recorder]) expect(fs.existsSync(file)).toBe(false);
-    expect(main.getWatchPaths(source)).toContain(bibliography);
-    expect(main.getWatchPaths(source)).toContain(figure);
-    expect(main.getWatchPaths(source)).not.toContain(auxiliary);
+    expect(main.getDiagnosticPaths(source)).toContain(bibliography);
+    expect(main.getDiagnosticPaths(source)).toContain(figure);
+    expect(main.getDiagnosticPaths(source)).not.toContain(auxiliary);
     const chapter = path.join(directory, "new-chapter.tex");
     fs.unlinkSync(source);
     fs.writeFileSync(source, "\\documentclass{article}\n\\input{new-chapter}\n");
-    expect(main.getWatchPaths(source)).toEqual([source, chapter]);
+    expect(main.getDiagnosticPaths(source)).toEqual([source, chapter]);
   });
 
   it("retains a failed build's log and auxiliary files for investigation", async () => {
@@ -404,7 +404,7 @@ describe("LaTeX compilation through the shared Tasks service", () => {
     const output = source.replace(/\.tex$/, ".pdf");
     fs.writeFileSync(source, "\\documentclass{article}\n\\input{chapter}\n");
     fs.writeFileSync(child, "Chapter\n");
-    expect(main.getWatchPaths(source)).toEqual([source, child]);
+    expect(main.getDiagnosticPaths(source)).toEqual([source, child]);
     fs.writeFileSync(auxiliary, "generated data");
     fs.writeFileSync(bibliography, "@book{example, title={Example}}\n");
     fs.writeFileSync(figure, "input figure");
@@ -413,10 +413,10 @@ describe("LaTeX compilation through the shared Tasks service", () => {
       source.replace(/\.tex$/, ".fls"),
       `INPUT ${auxiliary}\nINPUT ${bibliography}\nINPUT ${figure}\nINPUT ${output}\n`,
     );
-    expect(main.getWatchPaths(source)).toContain(bibliography);
-    expect(main.getWatchPaths(source)).toContain(figure);
-    expect(main.getWatchPaths(source)).not.toContain(auxiliary);
-    expect(main.getWatchPaths(source)).not.toContain(output);
+    expect(main.getDiagnosticPaths(source)).toContain(bibliography);
+    expect(main.getDiagnosticPaths(source)).toContain(figure);
+    expect(main.getDiagnosticPaths(source)).not.toContain(auxiliary);
+    expect(main.getDiagnosticPaths(source)).not.toContain(output);
   });
 
   it("tracks missing explicit and recorder inputs so their creation invalidates a result", () => {
@@ -427,8 +427,8 @@ describe("LaTeX compilation through the shared Tasks service", () => {
       source,
       "\\documentclass{article}\n\\input{missing-chapter}\n\\import{chapters/}{imported}\n",
     );
-    expect(main.getWatchPaths(source)).toEqual([source, child, imported]);
+    expect(main.getDiagnosticPaths(source)).toEqual([source, child, imported]);
     fs.writeFileSync(source.replace(/\.tex$/, ".fls"), `INPUT ${bibliography}\n`);
-    expect(main.getWatchPaths(source)).toEqual([source, child, imported, bibliography]);
+    expect(main.getDiagnosticPaths(source)).toEqual([source, child, imported, bibliography]);
   });
 });
