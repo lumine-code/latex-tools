@@ -89,9 +89,14 @@ jobs:
       # no ssh key, so rewrite them to anonymous HTTPS (the forks are public).
       - name: Use HTTPS for GitHub git dependencies
         run: git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-      - name: Create the private temporary directory
-        shell: bash
-        run: mkdir -p "$TEMP"
+      - name: Normalize the private Windows temporary directory
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $privateTemp = [System.IO.Path]::GetFullPath($env:TEMP)
+          foreach ($name in 'TEMP', 'TMP', 'TMPDIR') {
+            "$name=$privateTemp" >> $env:GITHUB_ENV
+          }
       - name: Install package dependencies
         working-directory: latex-tools
         run: npm ci --ignore-scripts
