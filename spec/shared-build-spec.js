@@ -277,6 +277,28 @@ describe("LaTeX compilation through the shared Tasks service", () => {
     expect(fs.existsSync(auxiliary)).toBe(true);
   });
 
+  it("restricts automatic wildcard and extension cleanup to the compiled document", async () => {
+    lumine.config.set("latex-tools.cleanAuxFiles", true);
+    lumine.config.set("latex-tools.cleanExtensions", ["*.aux", "chapter.log"]);
+    const job = main.runCompilation(source);
+    await waitForCompilers();
+    const [owned, other, siblingSource, siblingAux, siblingLog] = [
+      "document.aux",
+      "other.aux",
+      "document.chapter.tex",
+      "document.chapter.aux",
+      "document.chapter.log",
+    ].map((file) => path.join(directory, file));
+    for (const file of [owned, other, siblingSource, siblingAux, siblingLog])
+      fs.writeFileSync(file, "owned fixture");
+    children[0].emit("close", 0, null);
+    await job.completion;
+    expect(job.state).toBe("passed");
+    expect(fs.existsSync(owned)).toBe(false);
+    for (const file of [other, siblingSource, siblingAux, siblingLog])
+      expect(fs.existsSync(file)).toBe(true);
+  });
+
   it("reports a launcher failure instead of errors from an earlier compilation", async () => {
     const log = source.replace(/\.tex$/, ".log");
     const oldLog = "This is XeTeX\n! Undefined control sequence.\nl.5 \\oldcommand\n";

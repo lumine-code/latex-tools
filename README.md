@@ -32,7 +32,7 @@ The [tasks](https://github.com/lumine-code/tasks) package must also be installed
 
 If `latexmk` is not in your PATH, set the full path in the package settings under **Path to latexmk**. The `latex-tools:global-rc` command opens your global `latexmkrc` file to customize `latexmk` behavior (e.g. glossaries support).
 
-With **Clean auxiliary files after build** enabled, compilation runs normally, diagnostics are collected, and configured auxiliary files are removed only after success. The source, PDF and SyncTeX map are retained, and recorder dependencies remain available for diagnostic validity checks.
+With **Clean auxiliary files after build** enabled, compilation runs normally, diagnostics are collected, and configured auxiliary files for the compiled document are removed only after success. The source, PDF and SyncTeX map are retained, and recorder dependencies remain available for diagnostic validity checks.
 
 The shared Tasks status-bar control shows active jobs, retained logs and observed documents for every provider. Use **Packages > LaTeX Tools** for LaTeX commands and **Observed Files** for the LaTeX-only list. Opening a PDF during a build waits for completion before showing the updated file. Multi-file projects are supported: the build root is resolved from `% !TEX root` magic comments, `.fls` recorder files, or by scanning for documents that include the current file.
 

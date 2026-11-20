@@ -101,4 +101,16 @@ describe("LaTeX cleanup and SyncTeX data safety", () => {
     expect(path.basename(args[0] || "")).toBe("edit");
     expect(args.slice(1)).toEqual(["-o", `2:1.5:3.25:${pdf}`]);
   });
+
+  it("resolves a relative backward SyncTeX input beside its PDF", async () => {
+    const pdf = path.join(directory, "document.pdf");
+    fs.writeFileSync(pdf.replace(/\.pdf$/, ".synctex.gz"), "owned synchronization marker");
+    spyOn(cp, "execFileSync").and.returnValue("Input:chapters/chapter.tex\nLine:12\nColumn:3\n");
+
+    expect(await main.syncToSource(pdf, 2, 1.5, 3.25)).toEqual({
+      file: path.join(directory, "chapters", "chapter.tex"),
+      line: 12,
+      column: 3,
+    });
+  });
 });
