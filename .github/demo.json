@@ -1,18 +1,18 @@
 {
   "title": "latex-tools",
   "description": "Compile a LaTeX document and inspect the generated PDF beside its source.",
-  "recordedOn": "2026-11-07",
-  "sourceRevision": "b55562b60c3e1b04ce6dd152705314c2ddbce738",
-  "themeSourceRevision": "c63e492937bbcb7cb1a021cdc1c0284f990ac4d5",
+  "recordedOn": "2026-11-21",
+  "sourceRevision": "bf8dc1e2951cbb47d670302af263cef8875cb8a8",
+  "themeSourceRevision": "e477cb9a3576f124b0d415183e8d608fbae0182e",
   "mode": "normal",
   "fontSettings": "default",
   "scenario": "demo.js",
-  "recipeHash": "81462d0a406a63ae56cb70664f1ed86162c1c4ae8f0ca15c88f48cc42deb5902",
+  "recipeHash": "6c06f6227434210259d67c5a03cf54411df43e17fec32a79737f269452321c76",
   "environment": {
     "platform": "win32",
     "arch": "x64",
-    "electron": "45.2.3",
-    "chrome": "156.0.8078.80",
+    "electron": "45.4.1",
+    "chrome": "156.0.8078.100",
     "devicePixelRatio": 1,
     "locale": "en-GB",
     "fontFamily": "Fira Code, Menlo, DejaVu Sans Mono, Consolas, monospace",
@@ -21,42 +21,42 @@
   },
   "viewport": { "width": 1250, "height": 760 },
   "cornerRadius": 10,
-  "privacy": { "version": 1, "location": "neutral", "textChecked": true },
+  "privacy": { "version": 1, "location": "workspace-scratch", "textChecked": true },
   "sources": {
     "editor": {
-      "revision": "3709351ae9bd91a9e16eee6f03a4e26a3d86b443",
+      "revision": "cf34da37fdbcc4f64bb7f28a3aeec9dc2f84f78d",
+      "dirty": true,
+      "workingTreeHash": "cc4aac29731b750f6dae1bbbdee78ff23b50366519c108e55762d9b40ed06b30"
+    },
+    "package": {
+      "revision": "bf8dc1e2951cbb47d670302af263cef8875cb8a8",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
-    "package": {
-      "revision": "b55562b60c3e1b04ce6dd152705314c2ddbce738",
-      "dirty": true,
-      "workingTreeHash": "de415ed742470f49e6b0b7a7086ff3ca3ef64a1ca4608f6e7480eb8be2a4ca30"
-    },
     "latex-tools": {
-      "revision": "b55562b60c3e1b04ce6dd152705314c2ddbce738",
-      "dirty": true,
-      "workingTreeHash": "de415ed742470f49e6b0b7a7086ff3ca3ef64a1ca4608f6e7480eb8be2a4ca30"
-    },
-    "build": {
-      "revision": "a4923d0b8f1a91ca36ece6069883c030ffe8d2fb",
-      "dirty": true,
-      "workingTreeHash": "857f0a47e9fab1bff071c69677624e68acd7bfde1256fee77a0fb892420dc2d7"
+      "revision": "bf8dc1e2951cbb47d670302af263cef8875cb8a8",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     "language-latex": {
-      "revision": "9a85b207dca309faebbad661cc4f917e3b52e9f6",
+      "revision": "b63757013aca06436ea26a052eb1d94f9df28754",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     "one-theme": {
-      "revision": "c63e492937bbcb7cb1a021cdc1c0284f990ac4d5",
+      "revision": "e477cb9a3576f124b0d415183e8d608fbae0182e",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     "pdf-view": {
-      "revision": "722a64fe201646461a21a8a8fad2d9604f267673",
-      "dirty": true,
-      "workingTreeHash": "f7c848ce6da1593e39f01ff1b2aea5a29355606d32465c32727e81b832a0207f"
+      "revision": "1b6b9daea156366eb1e5cfee05f7e1d9ac84255c",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "tasks": {
+      "revision": "330d49fe93234a197a78766e42757e42b32ca2ef",
+      "dirty": false,
+      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     }
   },
   "fixtures": [
@@ -71,7 +71,7 @@
       "label": "Compile a LaTeX document and inspect the generated PDF beside its source.",
       "width": 1250,
       "height": 760,
-      "sha256": "d5a0b8c088da08e7b69f6798b605bb98391a1675abd41489795a3c0a1c8fe08d"
+      "sha256": "f640ea56a3fa61b46c30b7f3c1f4c7301ab2bf7cbd1d784289e75fe2fd9f1adb"
     }
   ]
 }
