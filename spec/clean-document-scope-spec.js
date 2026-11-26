@@ -97,6 +97,7 @@ describe("LaTeX document cleanup scope", () => {
     ]);
     expect(success).toHaveBeenCalledOnceWith("Cleaned 2 auxiliary file(s)", {
       detail: "first.bcf\nfirst.bcf-SAVE-ERROR",
+      detailCollapsed: true,
       dismissable: true,
     });
     expect(warning).not.toHaveBeenCalled();
@@ -131,6 +132,7 @@ describe("LaTeX document cleanup scope", () => {
     expect(unlink).toHaveBeenCalledOnceWith(path.join(directory, "first.bcf"));
     expect(warning).toHaveBeenCalledOnceWith("Failed to delete 1 file(s)", {
       detail: "first.bcf",
+      detailCollapsed: false,
       dismissable: true,
     });
     expect(fs.existsSync(path.join(directory, "first.bcf"))).toBeTrue();
